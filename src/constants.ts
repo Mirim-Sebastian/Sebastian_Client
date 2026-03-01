@@ -11,3 +11,7 @@ export const COLORS = [
 export const MIN_NAME = 2
 export const MAX_NAME = 15
 export const CANVAS_BG = '#041126'
+export const BRUSH_MIN = 4
+export const BRUSH_MAX = 40
+export const PEN_SIZE_DEFAULT = 6
+export const ERASER_SIZE_DEFAULT = 26

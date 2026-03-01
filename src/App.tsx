@@ -10,7 +10,16 @@ import { DrawScreen } from './components/DrawScreen'
 import { NameScreen } from './components/NameScreen'
 import { SentScreen } from './components/SentScreen'
 import { FISH_TEMPLATES, type FishTemplate } from './components/fishTemplates'
-import { CANVAS_BG, COLORS, MAX_NAME, MIN_NAME } from './constants'
+import {
+  BRUSH_MAX,
+  BRUSH_MIN,
+  CANVAS_BG,
+  COLORS,
+  ERASER_SIZE_DEFAULT,
+  MAX_NAME,
+  MIN_NAME,
+  PEN_SIZE_DEFAULT,
+} from './constants'
 import './App.css'
 
 type Step = 'draw' | 'name' | 'sent'
@@ -30,6 +39,8 @@ function App() {
   const [step, setStep] = useState<Step>('draw')
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen')
   const [color, setColor] = useState(COLORS[0].value)
+  const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT)
+  const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT)
   const [hasDrawing, setHasDrawing] = useState(false)
   const [draftImage, setDraftImage] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -144,13 +155,14 @@ function App() {
   }
 
   const applyTool = (ctx: CanvasRenderingContext2D) => {
+    const size = tool === 'eraser' ? eraserSize : penSize
     if (tool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.lineWidth = 26
+      ctx.lineWidth = size
     } else {
       ctx.globalCompositeOperation = 'source-over'
       ctx.strokeStyle = color
-      ctx.lineWidth = 6
+      ctx.lineWidth = size
     }
   }
 
@@ -285,6 +297,14 @@ function App() {
     setTool('pen')
   }
 
+  const handleBrushSizeChange = (value: number) => {
+    if (tool === 'eraser') {
+      setEraserSize(value)
+    } else {
+      setPenSize(value)
+    }
+  }
+
   const handleUndo = () => {
     if (!canUndo) return
     historyRef.current.pop()
@@ -328,12 +348,16 @@ function App() {
           selectedTemplateId={selectedTemplateId}
           canUndo={canUndo}
           drawError={drawError}
+          brushSize={tool === 'eraser' ? eraserSize : penSize}
+          brushMin={BRUSH_MIN}
+          brushMax={BRUSH_MAX}
           onUndo={handleUndo}
           onToolChange={setTool}
           onColorChange={(value) => {
             setColor(value)
             setTool('pen')
           }}
+          onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}
           onComplete={handleCompleteDrawing}
           onPointerDown={handlePointerDown}

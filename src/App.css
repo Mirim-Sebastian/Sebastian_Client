@@ -31,6 +31,13 @@
   gap: 10px;
 }
 
+.control-group.brush {
+  flex: 0 1 220px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 .control-group.palette {
   flex: 1;
   justify-content: center;
@@ -136,6 +143,25 @@
 .template-button.active {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+.brush-label {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(230, 240, 255, 0.85);
+}
+
+.brush-value {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.brush-range {
+  width: min(220px, 100%);
+  accent-color: var(--accent);
 }
 
 .canvas-wrap {
