@@ -72,7 +72,7 @@ function App() {
     const { bounds } = template;
     const maxByWidth = width / bounds.width;
     const maxByHeight = height / bounds.height;
-    return Math.min(maxByWidth, maxByHeight) * 0.98;
+    return Math.min(maxByWidth, maxByHeight) * 0.8;
   };
 
   const buildTemplatePath = (
@@ -97,12 +97,7 @@ function App() {
     const baseSize = getTemplateSize(template, frameWidth, frameHeight);
     const fishHeight = baseSize * template.bounds.height;
     const frameLine = Math.max(1.5, Math.min(3.5, fishHeight * 0.01));
-    const path = buildTemplatePath(
-      template,
-      frameWidth,
-      frameHeight,
-      baseSize,
-    );
+    const path = buildTemplatePath(template, frameWidth, frameHeight, baseSize);
     const frameInset = frameLine * 2;
     const frameSize = Math.max(0, baseSize - frameInset);
     const framePath = buildTemplatePath(
