@@ -4,12 +4,12 @@ import {
   useState,
   type ChangeEvent,
   type PointerEvent,
-} from 'react'
-import { postFish } from './api/fish'
-import { DrawScreen } from './components/DrawScreen'
-import { NameScreen } from './components/NameScreen'
-import { SentScreen } from './components/SentScreen'
-import { FISH_TEMPLATES, type FishTemplate } from './components/fishTemplates'
+} from "react";
+import { postFish } from "./api/fish";
+import { DrawScreen } from "./components/DrawScreen";
+import { NameScreen } from "./components/NameScreen";
+import { SentScreen } from "./components/SentScreen";
+import { FISH_TEMPLATES, type FishTemplate } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
   BRUSH_MIN,
@@ -19,327 +19,323 @@ import {
   MAX_NAME,
   MIN_NAME,
   PEN_SIZE_DEFAULT,
-} from './constants'
-import './App.css'
+} from "./constants";
+import "./App.css";
 
-type Step = 'draw' | 'name' | 'sent'
+type Step = "draw" | "name" | "sent";
 
 function App() {
-  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const frameCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null)
-  const frameContextRef = useRef<CanvasRenderingContext2D | null>(null)
-  const isDrawingRef = useRef(false)
-  const hasDrawingRef = useRef(false)
-  const clipActiveRef = useRef(false)
-  const templatePathRef = useRef<Path2D | null>(null)
-  const historyRef = useRef<string[]>([])
-  const selectedTemplateRef = useRef(FISH_TEMPLATES[0])
+  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const frameContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const isDrawingRef = useRef(false);
+  const hasDrawingRef = useRef(false);
+  const clipActiveRef = useRef(false);
+  const templatePathRef = useRef<Path2D | null>(null);
+  const historyRef = useRef<string[]>([]);
+  const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
 
-  const [step, setStep] = useState<Step>('draw')
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen')
-  const [color, setColor] = useState(COLORS[0].value)
-  const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT)
-  const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT)
-  const [hasDrawing, setHasDrawing] = useState(false)
-  const [draftImage, setDraftImage] = useState<string | null>(null)
-  const [name, setName] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [drawError, setDrawError] = useState(false)
-  const [nameError, setNameError] = useState(false)
-  const [submitError, setSubmitError] = useState(false)
+  const [step, setStep] = useState<Step>("draw");
+  const [tool, setTool] = useState<"pen" | "eraser">("pen");
+  const [color, setColor] = useState(COLORS[0].value);
+  const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT);
+  const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT);
+  const [hasDrawing, setHasDrawing] = useState(false);
+  const [draftImage, setDraftImage] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [drawError, setDrawError] = useState(false);
+  const [nameError, setNameError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(
     FISH_TEMPLATES[0].id,
-  )
-  const [canUndo, setCanUndo] = useState(false)
+  );
+  const [canUndo, setCanUndo] = useState(false);
 
   const selectedTemplate =
     FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
-    FISH_TEMPLATES[0]
+    FISH_TEMPLATES[0];
 
   useEffect(() => {
-    hasDrawingRef.current = hasDrawing
-  }, [hasDrawing])
+    hasDrawingRef.current = hasDrawing;
+  }, [hasDrawing]);
 
   useEffect(() => {
-    selectedTemplateRef.current = selectedTemplate
-  }, [selectedTemplate])
+    selectedTemplateRef.current = selectedTemplate;
+  }, [selectedTemplate]);
 
   const buildTemplatePath = (
     template: FishTemplate,
     width: number,
     height: number,
   ) => {
-    const size = Math.min(width, height) * 0.7
-    return template.createPath(width / 2, height / 2, size)
-  }
+    const size = Math.min(width, height) * 1.2;
+    return template.createPath(width / 2, height / 2, size);
+  };
 
   const updateFrame = (width?: number, height?: number) => {
-    const frameCanvas = frameCanvasRef.current
-    const frameCtx = frameContextRef.current
-    const drawCanvas = drawCanvasRef.current
-    if (!frameCanvas || !frameCtx || !drawCanvas) return
-    const rect = drawCanvas.getBoundingClientRect()
-    const frameWidth = width ?? rect.width
-    const frameHeight = height ?? rect.height
+    const frameCanvas = frameCanvasRef.current;
+    const frameCtx = frameContextRef.current;
+    const drawCanvas = drawCanvasRef.current;
+    if (!frameCanvas || !frameCtx || !drawCanvas) return;
+    const rect = drawCanvas.getBoundingClientRect();
+    const frameWidth = width ?? rect.width;
+    const frameHeight = height ?? rect.height;
     const path = buildTemplatePath(
       selectedTemplateRef.current,
       frameWidth,
       frameHeight,
-    )
-    templatePathRef.current = path
-    frameCtx.clearRect(0, 0, frameWidth, frameHeight)
-    frameCtx.strokeStyle = 'rgba(230, 240, 255, 0.75)'
-    frameCtx.lineWidth = 2
-    frameCtx.lineJoin = 'round'
-    frameCtx.lineCap = 'round'
-    frameCtx.stroke(path)
-  }
+    );
+    templatePathRef.current = path;
+    frameCtx.clearRect(0, 0, frameWidth, frameHeight);
+    frameCtx.strokeStyle = "rgba(230, 240, 255, 0.75)";
+    frameCtx.lineWidth = 2;
+    frameCtx.lineJoin = "round";
+    frameCtx.lineCap = "round";
+    frameCtx.stroke(path);
+  };
 
   useEffect(() => {
-    const drawCanvas = drawCanvasRef.current
-    const frameCanvas = frameCanvasRef.current
-    if (!drawCanvas || !frameCanvas) return
-    const drawCtx = drawCanvas.getContext('2d')
-    const frameCtx = frameCanvas.getContext('2d')
-    if (!drawCtx || !frameCtx) return
-    contextRef.current = drawCtx
-    frameContextRef.current = frameCtx
+    const drawCanvas = drawCanvasRef.current;
+    const frameCanvas = frameCanvasRef.current;
+    if (!drawCanvas || !frameCanvas) return;
+    const drawCtx = drawCanvas.getContext("2d");
+    const frameCtx = frameCanvas.getContext("2d");
+    if (!drawCtx || !frameCtx) return;
+    contextRef.current = drawCtx;
+    frameContextRef.current = frameCtx;
 
     const resizeCanvas = () => {
-      const { width, height } = drawCanvas.getBoundingClientRect()
-      if (!width || !height) return
-      const ratio = window.devicePixelRatio || 1
+      const { width, height } = drawCanvas.getBoundingClientRect();
+      if (!width || !height) return;
+      const ratio = window.devicePixelRatio || 1;
       const snapshot = hasDrawingRef.current
-        ? drawCanvas.toDataURL('image/png')
-        : null
-      drawCanvas.width = Math.round(width * ratio)
-      drawCanvas.height = Math.round(height * ratio)
-      frameCanvas.width = Math.round(width * ratio)
-      frameCanvas.height = Math.round(height * ratio)
-      drawCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      frameCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      drawCtx.lineCap = 'round'
-      drawCtx.lineJoin = 'round'
+        ? drawCanvas.toDataURL("image/png")
+        : null;
+      drawCanvas.width = Math.round(width * ratio);
+      drawCanvas.height = Math.round(height * ratio);
+      frameCanvas.width = Math.round(width * ratio);
+      frameCanvas.height = Math.round(height * ratio);
+      drawCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      frameCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      drawCtx.lineCap = "round";
+      drawCtx.lineJoin = "round";
       if (snapshot) {
-        const img = new Image()
+        const img = new Image();
         img.onload = () => {
-          drawCtx.drawImage(img, 0, 0, width, height)
-        }
-        img.src = snapshot
+          drawCtx.drawImage(img, 0, 0, width, height);
+        };
+        img.src = snapshot;
       }
-      updateFrame(width, height)
-    }
+      updateFrame(width, height);
+    };
 
-    const observer = new ResizeObserver(resizeCanvas)
-    observer.observe(drawCanvas)
-    resizeCanvas()
+    const observer = new ResizeObserver(resizeCanvas);
+    observer.observe(drawCanvas);
+    resizeCanvas();
 
     return () => {
-      observer.disconnect()
-    }
-  }, [])
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
-    window.requestAnimationFrame(() => updateFrame())
-  }, [selectedTemplateId])
+    window.requestAnimationFrame(() => updateFrame());
+  }, [selectedTemplateId]);
 
   const getPoint = (event: PointerEvent<HTMLCanvasElement>) => {
-    const canvas = drawCanvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
-    const rect = canvas.getBoundingClientRect()
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
     return {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
-    }
-  }
+    };
+  };
 
   const applyTool = (ctx: CanvasRenderingContext2D) => {
-    const size = tool === 'eraser' ? eraserSize : penSize
-    if (tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out'
-      ctx.lineWidth = size
+    const size = tool === "eraser" ? eraserSize : penSize;
+    if (tool === "eraser") {
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.lineWidth = size;
     } else {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.strokeStyle = color
-      ctx.lineWidth = size
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
     }
-  }
+  };
 
   const pushHistory = (dataUrl: string) => {
-    historyRef.current.push(dataUrl)
-    setCanUndo(historyRef.current.length > 0)
-  }
+    historyRef.current.push(dataUrl);
+    setCanUndo(historyRef.current.length > 0);
+  };
 
   const restoreFromSnapshot = (dataUrl?: string) => {
-    const canvas = drawCanvasRef.current
-    const ctx = contextRef.current
-    if (!canvas || !ctx) return
-    const { width, height } = canvas.getBoundingClientRect()
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    if (!canvas || !ctx) return;
+    const { width, height } = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!dataUrl) {
-      setHasDrawing(false)
-      return
+      setHasDrawing(false);
+      return;
     }
-    const img = new Image()
+    const img = new Image();
     img.onload = () => {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.drawImage(img, 0, 0, width, height)
-    }
-    img.src = dataUrl
-    setHasDrawing(true)
-  }
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(img, 0, 0, width, height);
+    };
+    img.src = dataUrl;
+    setHasDrawing(true);
+  };
 
   const resetDrawing = () => {
-    restoreFromSnapshot()
-    historyRef.current = []
-    setCanUndo(false)
-    setDrawError(false)
-  }
+    restoreFromSnapshot();
+    historyRef.current = [];
+    setCanUndo(false);
+    setDrawError(false);
+  };
 
   const flashError = (setter: (value: boolean) => void) => {
-    setter(true)
-    window.setTimeout(() => setter(false), 600)
-  }
+    setter(true);
+    window.setTimeout(() => setter(false), 600);
+  };
 
-  const handlePointerDown = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    if (step !== 'draw') return
-    const canvas = drawCanvasRef.current
-    const ctx = contextRef.current
-    if (!canvas || !ctx) return
-    const { x, y } = getPoint(event)
-    const clipPath = templatePathRef.current
-    isDrawingRef.current = true
-    canvas.setPointerCapture(event.pointerId)
-    applyTool(ctx)
+  const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (step !== "draw") return;
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    if (!canvas || !ctx) return;
+    const { x, y } = getPoint(event);
+    const clipPath = templatePathRef.current;
+    isDrawingRef.current = true;
+    canvas.setPointerCapture(event.pointerId);
+    applyTool(ctx);
     if (clipPath) {
-      ctx.save()
-      ctx.clip(clipPath)
-      clipActiveRef.current = true
+      ctx.save();
+      ctx.clip(clipPath);
+      clipActiveRef.current = true;
     }
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    ctx.lineTo(x + 0.1, y + 0.1)
-    ctx.stroke()
-    setHasDrawing(true)
-  }
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 0.1, y + 0.1);
+    ctx.stroke();
+    setHasDrawing(true);
+  };
 
-  const handlePointerMove = (
-    event: PointerEvent<HTMLCanvasElement>,
-  ) => {
-    if (!isDrawingRef.current) return
-    const ctx = contextRef.current
-    if (!ctx) return
-    const { x, y } = getPoint(event)
-    ctx.lineTo(x, y)
-    ctx.stroke()
-  }
+  const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current) return;
+    const ctx = contextRef.current;
+    if (!ctx) return;
+    const { x, y } = getPoint(event);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
 
   const handlePointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
-    const canvas = drawCanvasRef.current
-    const ctx = contextRef.current
-    if (!canvas || !ctx) return
-    if (!isDrawingRef.current) return
-    isDrawingRef.current = false
-    ctx.closePath()
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    if (!canvas || !ctx) return;
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    ctx.closePath();
     if (clipActiveRef.current) {
-      ctx.restore()
-      clipActiveRef.current = false
+      ctx.restore();
+      clipActiveRef.current = false;
     }
     if (canvas.hasPointerCapture(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId)
+      canvas.releasePointerCapture(event.pointerId);
     }
-    const snapshot = canvas.toDataURL('image/png')
-    pushHistory(snapshot)
-  }
+    const snapshot = canvas.toDataURL("image/png");
+    pushHistory(snapshot);
+  };
 
   const exportImage = () => {
-    const canvas = drawCanvasRef.current
-    if (!canvas) return null
-    const exportCanvas = document.createElement('canvas')
-    exportCanvas.width = canvas.width
-    exportCanvas.height = canvas.height
-    const exportCtx = exportCanvas.getContext('2d')
-    if (!exportCtx) return null
-    exportCtx.fillStyle = CANVAS_BG
-    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
-    exportCtx.drawImage(canvas, 0, 0)
-    return exportCanvas.toDataURL('image/png')
-  }
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return null;
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = canvas.width;
+    exportCanvas.height = canvas.height;
+    const exportCtx = exportCanvas.getContext("2d");
+    if (!exportCtx) return null;
+    exportCtx.fillStyle = CANVAS_BG;
+    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    exportCtx.drawImage(canvas, 0, 0);
+    return exportCanvas.toDataURL("image/png");
+  };
 
   const handleCompleteDrawing = () => {
     if (!hasDrawing) {
-      flashError(setDrawError)
-      return
+      flashError(setDrawError);
+      return;
     }
-    const image = exportImage()
+    const image = exportImage();
     if (!image) {
-      flashError(setDrawError)
-      return
+      flashError(setDrawError);
+      return;
     }
-    setDraftImage(image)
-    setStep('name')
-  }
+    setDraftImage(image);
+    setStep("name");
+  };
 
   const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.slice(0, MAX_NAME)
-    setName(value)
-    setNameError(false)
-    setSubmitError(false)
-  }
+    const value = event.target.value.slice(0, MAX_NAME);
+    setName(value);
+    setNameError(false);
+    setSubmitError(false);
+  };
 
   const handleTemplateSelect = (templateId: string) => {
-    if (step !== 'draw') return
-    setSelectedTemplateId(templateId)
-    resetDrawing()
-    setTool('pen')
-  }
+    if (step !== "draw") return;
+    setSelectedTemplateId(templateId);
+    resetDrawing();
+    setTool("pen");
+  };
 
   const handleBrushSizeChange = (value: number) => {
-    if (tool === 'eraser') {
-      setEraserSize(value)
+    if (tool === "eraser") {
+      setEraserSize(value);
     } else {
-      setPenSize(value)
+      setPenSize(value);
     }
-  }
+  };
 
   const handleUndo = () => {
-    if (!canUndo) return
-    historyRef.current.pop()
-    const previous = historyRef.current[historyRef.current.length - 1]
-    restoreFromSnapshot(previous)
-    setCanUndo(historyRef.current.length > 0)
-  }
+    if (!canUndo) return;
+    historyRef.current.pop();
+    const previous = historyRef.current[historyRef.current.length - 1];
+    restoreFromSnapshot(previous);
+    setCanUndo(historyRef.current.length > 0);
+  };
 
-  const nameLength = name.trim().length
-  const isNameValid = nameLength >= MIN_NAME && nameLength <= MAX_NAME
+  const nameLength = name.trim().length;
+  const isNameValid = nameLength >= MIN_NAME && nameLength <= MAX_NAME;
 
   const handleSubmit = async () => {
     if (!draftImage) {
-      setStep('draw')
-      return
+      setStep("draw");
+      return;
     }
     if (!isNameValid) {
-      flashError(setNameError)
-      return
+      flashError(setNameError);
+      return;
     }
-    setIsSubmitting(true)
-    setSubmitError(false)
+    setIsSubmitting(true);
+    setSubmitError(false);
     try {
-      await postFish({ name: name.trim(), image: draftImage })
-      setStep('sent')
+      await postFish({ name: name.trim(), image: draftImage });
+      setStep("sent");
     } catch (error) {
-      setSubmitError(true)
+      setSubmitError(true);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="app">
-      {step === 'draw' && (
+      {step === "draw" && (
         <DrawScreen
           tool={tool}
           color={color}
@@ -348,14 +344,14 @@ function App() {
           selectedTemplateId={selectedTemplateId}
           canUndo={canUndo}
           drawError={drawError}
-          brushSize={tool === 'eraser' ? eraserSize : penSize}
+          brushSize={tool === "eraser" ? eraserSize : penSize}
           brushMin={BRUSH_MIN}
           brushMax={BRUSH_MAX}
           onUndo={handleUndo}
           onToolChange={setTool}
           onColorChange={(value) => {
-            setColor(value)
-            setTool('pen')
+            setColor(value);
+            setTool("pen");
           }}
           onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}
@@ -368,7 +364,7 @@ function App() {
         />
       )}
 
-      {step === 'name' && (
+      {step === "name" && (
         <NameScreen
           draftImage={draftImage}
           name={name}
@@ -380,9 +376,9 @@ function App() {
         />
       )}
 
-      {step === 'sent' && <SentScreen />}
+      {step === "sent" && <SentScreen />}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
