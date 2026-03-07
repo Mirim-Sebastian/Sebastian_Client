@@ -37,7 +37,7 @@ function App() {
   const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
 
   const [step, setStep] = useState<Step>("draw");
-  const [tool, setTool] = useState<"pen" | "eraser">("pen");
+  const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
   const [color, setColor] = useState(COLORS[0].value);
   const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT);
   const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT);
@@ -202,8 +202,27 @@ function App() {
     window.setTimeout(() => setter(false), 600);
   };
 
+  const handleFill = () => {
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    const clipPath = templatePathRef.current;
+    if (!canvas || !ctx || !clipPath) return;
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = color;
+    ctx.fill(clipPath);
+    ctx.restore();
+    setHasDrawing(true);
+    const snapshot = canvas.toDataURL("image/png");
+    pushHistory(snapshot);
+  };
+
   const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     if (step !== "draw") return;
+    if (tool === "fill") {
+      handleFill();
+      return;
+    }
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
     if (!canvas || !ctx) return;
@@ -253,6 +272,7 @@ function App() {
 
   const exportImage = () => {
     const canvas = drawCanvasRef.current;
+    const frameCanvas = frameCanvasRef.current;
     if (!canvas) return null;
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = canvas.width;
@@ -261,7 +281,16 @@ function App() {
     if (!exportCtx) return null;
     exportCtx.fillStyle = CANVAS_BG;
     exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-    exportCtx.drawImage(canvas, 0, 0);
+    if (frameCanvas) {
+      exportCtx.drawImage(
+        frameCanvas,
+        0,
+        0,
+        exportCanvas.width,
+        exportCanvas.height,
+      );
+    }
+    exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
     return exportCanvas.toDataURL("image/png");
   };
 
@@ -296,7 +325,7 @@ function App() {
   const handleBrushSizeChange = (value: number) => {
     if (tool === "eraser") {
       setEraserSize(value);
-    } else {
+    } else if (tool === "pen") {
       setPenSize(value);
     }
   };
@@ -351,7 +380,9 @@ function App() {
           onToolChange={setTool}
           onColorChange={(value) => {
             setColor(value);
-            setTool("pen");
+            if (tool === "eraser") {
+              setTool("pen");
+            }
           }}
           onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}

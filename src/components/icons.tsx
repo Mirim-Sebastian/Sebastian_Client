@@ -35,6 +35,17 @@ export const EraserIcon = () => (
   </svg>
 )
 
+export const FillIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4.5 14.5l7-7 6 6-7 7H4.5z" strokeLinejoin="round" />
+    <path d="M12.5 5.5l3 3" strokeLinecap="round" />
+    <path
+      d="M18.5 14.5c1.2 1.3 1.8 2.1 1.8 3.1a1.8 1.8 0 11-3.6 0c0-1 .6-1.8 1.8-3.1z"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 export const SpinnerIcon = () => (
   <svg className="spinner" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="9" strokeWidth="2" opacity="0.3" />
