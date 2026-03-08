@@ -149,7 +149,7 @@ export const DrawScreen = ({
         </div>
       </div>
       <div className={`canvas-wrap ${drawError ? "error" : ""}`}>
-        <div className="canvas-layer">
+        <div className={`canvas-layer ${isFill ? "fill-mode" : "draw-mode"}`}>
           <canvas
             ref={drawCanvasRef}
             className="canvas drawing-canvas"

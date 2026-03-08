@@ -60,7 +60,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .icon-button svg {
@@ -85,7 +87,9 @@
 }
 
 .icon-button.primary.error {
-  box-shadow: 0 0 0 2px var(--danger), 0 12px 26px rgba(255, 107, 107, 0.35);
+  box-shadow:
+    0 0 0 2px var(--danger),
+    0 12px 26px rgba(255, 107, 107, 0.35);
 }
 
 .icon-button:disabled {
@@ -124,7 +128,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .template-button svg {
@@ -210,6 +216,14 @@
 .frame-canvas {
   z-index: 1;
   pointer-events: none;
+}
+
+.canvas-layer.fill-mode .drawing-canvas {
+  z-index: 1;
+}
+
+.canvas-layer.fill-mode .frame-canvas {
+  z-index: 2;
 }
 
 .name-screen {

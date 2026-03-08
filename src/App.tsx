@@ -31,8 +31,7 @@ function App() {
   const frameContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawingRef = useRef(false);
   const hasDrawingRef = useRef(false);
-  const clipActiveRef = useRef(false);
-  const templatePathRef = useRef<Path2D | null>(null);
+  const framePathRef = useRef<Path2D | null>(null);
   const historyRef = useRef<string[]>([]);
   const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
 
@@ -65,13 +64,25 @@ function App() {
     selectedTemplateRef.current = selectedTemplate;
   }, [selectedTemplate]);
 
-  const buildTemplatePath = (
+  const getTemplateSize = (
     template: FishTemplate,
     width: number,
     height: number,
   ) => {
-    const size = Math.min(width, height) * 1.2;
-    return template.createPath(width / 2, height / 2, size);
+    const { bounds } = template;
+    const maxByWidth = width / bounds.width;
+    const maxByHeight = height / bounds.height;
+    return Math.min(maxByWidth, maxByHeight) * 0.98;
+  };
+
+  const buildTemplatePath = (
+    template: FishTemplate,
+    width: number,
+    height: number,
+    size: number,
+  ) => {
+    const centerX = width / 2 + template.bounds.centerOffsetX * size;
+    return template.createPath(centerX, height / 2, size);
   };
 
   const updateFrame = (width?: number, height?: number) => {
@@ -82,18 +93,36 @@ function App() {
     const rect = drawCanvas.getBoundingClientRect();
     const frameWidth = width ?? rect.width;
     const frameHeight = height ?? rect.height;
-    const path = buildTemplatePath(
+    const baseSize = getTemplateSize(
       selectedTemplateRef.current,
       frameWidth,
       frameHeight,
     );
-    templatePathRef.current = path;
+    const path = buildTemplatePath(
+      selectedTemplateRef.current,
+      frameWidth,
+      frameHeight,
+      baseSize,
+    );
+    const frameLine = 2;
+    const frameInset = frameLine * 2;
+    const frameSize = Math.max(0, baseSize - frameInset);
+    const framePath = buildTemplatePath(
+      selectedTemplateRef.current,
+      frameWidth,
+      frameHeight,
+      frameSize,
+    );
+    framePathRef.current = framePath;
     frameCtx.clearRect(0, 0, frameWidth, frameHeight);
     frameCtx.strokeStyle = "rgba(230, 240, 255, 0.75)";
-    frameCtx.lineWidth = 2;
+    frameCtx.lineWidth = frameLine;
     frameCtx.lineJoin = "round";
     frameCtx.lineCap = "round";
-    frameCtx.stroke(path);
+    frameCtx.save();
+    frameCtx.clip(path);
+    frameCtx.stroke(framePath);
+    frameCtx.restore();
   };
 
   useEffect(() => {
@@ -205,12 +234,12 @@ function App() {
   const handleFill = () => {
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
-    const clipPath = templatePathRef.current;
-    if (!canvas || !ctx || !clipPath) return;
+    const fillPath = framePathRef.current;
+    if (!canvas || !ctx || !fillPath) return;
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = color;
-    ctx.fill(clipPath);
+    ctx.fill(fillPath);
     ctx.restore();
     setHasDrawing(true);
     const snapshot = canvas.toDataURL("image/png");
@@ -227,15 +256,9 @@ function App() {
     const ctx = contextRef.current;
     if (!canvas || !ctx) return;
     const { x, y } = getPoint(event);
-    const clipPath = templatePathRef.current;
     isDrawingRef.current = true;
     canvas.setPointerCapture(event.pointerId);
     applyTool(ctx);
-    if (clipPath) {
-      ctx.save();
-      ctx.clip(clipPath);
-      clipActiveRef.current = true;
-    }
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + 0.1, y + 0.1);
@@ -259,10 +282,6 @@ function App() {
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
     ctx.closePath();
-    if (clipActiveRef.current) {
-      ctx.restore();
-      clipActiveRef.current = false;
-    }
     if (canvas.hasPointerCapture(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId);
     }
