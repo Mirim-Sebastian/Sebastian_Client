@@ -15,6 +15,13 @@ export const UndoIcon = () => (
   </svg>
 )
 
+export const RedoIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M15 7l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19 11h-9a6 6 0 100 12" strokeLinecap="round" />
+  </svg>
+)
+
 export const PenIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path

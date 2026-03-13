@@ -1,5 +1,12 @@
 import type { PointerEvent, RefObject } from "react";
-import { CheckIcon, EraserIcon, FillIcon, PenIcon, UndoIcon } from "./icons";
+import {
+  CheckIcon,
+  EraserIcon,
+  FillIcon,
+  PenIcon,
+  RedoIcon,
+  UndoIcon,
+} from "./icons";
 import type { FishTemplate } from "./fishTemplates";
 
 type ColorOption = {
@@ -14,11 +21,13 @@ type DrawScreenProps = {
   templates: FishTemplate[];
   selectedTemplateId: string;
   canUndo: boolean;
+  canRedo: boolean;
   drawError: boolean;
   brushSize: number;
   brushMin: number;
   brushMax: number;
   onUndo: () => void;
+  onRedo: () => void;
   onToolChange: (tool: "pen" | "eraser" | "fill") => void;
   onColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
@@ -38,11 +47,13 @@ export const DrawScreen = ({
   templates,
   selectedTemplateId,
   canUndo,
+  canRedo,
   drawError,
   brushSize,
   brushMin,
   brushMax,
   onUndo,
+  onRedo,
   onToolChange,
   onColorChange,
   onBrushSizeChange,
@@ -69,6 +80,15 @@ export const DrawScreen = ({
             aria-label="되돌리기"
           >
             <UndoIcon />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onRedo}
+            disabled={!canRedo}
+            aria-label="다시하기"
+          >
+            <RedoIcon />
           </button>
           <button
             type="button"

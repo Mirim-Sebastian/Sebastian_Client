@@ -33,6 +33,7 @@ function App() {
   const hasDrawingRef = useRef(false);
   const framePathRef = useRef<Path2D | null>(null);
   const historyRef = useRef<string[]>([]);
+  const redoHistoryRef = useRef<string[]>([]);
   const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
 
   const [step, setStep] = useState<Step>("draw");
@@ -51,6 +52,7 @@ function App() {
     FISH_TEMPLATES[0].id,
   );
   const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
   const selectedTemplate =
     FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
@@ -191,7 +193,9 @@ function App() {
 
   const pushHistory = (dataUrl: string) => {
     historyRef.current.push(dataUrl);
+    redoHistoryRef.current = [];
     setCanUndo(historyRef.current.length > 0);
+    setCanRedo(false);
   };
 
   const restoreFromSnapshot = (dataUrl?: string) => {
@@ -216,7 +220,9 @@ function App() {
   const resetDrawing = () => {
     restoreFromSnapshot();
     historyRef.current = [];
+    redoHistoryRef.current = [];
     setCanUndo(false);
+    setCanRedo(false);
     setDrawError(false);
   };
 
@@ -345,10 +351,24 @@ function App() {
 
   const handleUndo = () => {
     if (!canUndo) return;
-    historyRef.current.pop();
+    const current = historyRef.current.pop();
+    if (current) {
+      redoHistoryRef.current.push(current);
+    }
     const previous = historyRef.current[historyRef.current.length - 1];
     restoreFromSnapshot(previous);
     setCanUndo(historyRef.current.length > 0);
+    setCanRedo(redoHistoryRef.current.length > 0);
+  };
+
+  const handleRedo = () => {
+    if (!canRedo) return;
+    const next = redoHistoryRef.current.pop();
+    if (!next) return;
+    historyRef.current.push(next);
+    restoreFromSnapshot(next);
+    setCanUndo(historyRef.current.length > 0);
+    setCanRedo(redoHistoryRef.current.length > 0);
   };
 
   const nameLength = name.trim().length;
@@ -385,11 +405,13 @@ function App() {
           templates={FISH_TEMPLATES}
           selectedTemplateId={selectedTemplateId}
           canUndo={canUndo}
+          canRedo={canRedo}
           drawError={drawError}
           brushSize={tool === "eraser" ? eraserSize : penSize}
           brushMin={BRUSH_MIN}
           brushMax={BRUSH_MAX}
           onUndo={handleUndo}
+          onRedo={handleRedo}
           onToolChange={setTool}
           onColorChange={(value) => {
             setColor(value);
