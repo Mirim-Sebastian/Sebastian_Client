@@ -93,22 +93,20 @@ function App() {
     const rect = drawCanvas.getBoundingClientRect();
     const frameWidth = width ?? rect.width;
     const frameHeight = height ?? rect.height;
-    const baseSize = getTemplateSize(
-      selectedTemplateRef.current,
-      frameWidth,
-      frameHeight,
-    );
+    const template = selectedTemplateRef.current;
+    const baseSize = getTemplateSize(template, frameWidth, frameHeight);
+    const fishHeight = baseSize * template.bounds.height;
+    const frameLine = Math.max(1.5, Math.min(3.5, fishHeight * 0.01));
     const path = buildTemplatePath(
-      selectedTemplateRef.current,
+      template,
       frameWidth,
       frameHeight,
       baseSize,
     );
-    const frameLine = 2;
     const frameInset = frameLine * 2;
     const frameSize = Math.max(0, baseSize - frameInset);
     const framePath = buildTemplatePath(
-      selectedTemplateRef.current,
+      template,
       frameWidth,
       frameHeight,
       frameSize,
@@ -120,8 +118,9 @@ function App() {
     frameCtx.lineJoin = "round";
     frameCtx.lineCap = "round";
     frameCtx.save();
-    frameCtx.clip(path);
-    frameCtx.stroke(framePath);
+    frameCtx.stroke(path);
+    frameCtx.globalCompositeOperation = "destination-in";
+    frameCtx.fill(path);
     frameCtx.restore();
   };
 
