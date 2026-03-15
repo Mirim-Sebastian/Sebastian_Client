@@ -122,6 +122,29 @@
   cursor: pointer;
 }
 
+.color-dot.custom {
+  position: relative;
+  overflow: hidden;
+  background: conic-gradient(
+    #ff3b3b,
+    #ffb347,
+    #ffe066,
+    #7acb6e,
+    #38d9a9,
+    #4aa3ff,
+    #7b6cff,
+    #ff7ab6,
+    #ff3b3b
+  );
+}
+
+.color-dot.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 .color-dot.active {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
