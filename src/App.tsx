@@ -373,6 +373,12 @@ function App() {
 
   const nameLength = name.trim().length;
   const isNameValid = nameLength >= MIN_NAME && nameLength <= MAX_NAME;
+  const titleText =
+    step === "draw"
+      ? "물고기를 그려주세요!"
+      : step === "name"
+        ? "물고기 이름을 지어주세요!"
+        : "전송 완료!";
 
   const handleSubmit = async () => {
     if (!draftImage) {
@@ -397,6 +403,7 @@ function App() {
 
   return (
     <div className="app">
+      <h1 className="app-title">{titleText}</h1>
       {step === "draw" && (
         <DrawScreen
           tool={tool}
