@@ -1,6 +1,6 @@
 .app {
   min-height: 100vh;
-  padding: 24px;
+  padding: 32px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,7 +9,7 @@
 }
 
 .app-title {
-  margin: 0;
+  margin: 12px;
   text-align: center;
   font-family: var(--title-font);
   font-size: clamp(1.8rem, 2.6vw, 3.2rem);
