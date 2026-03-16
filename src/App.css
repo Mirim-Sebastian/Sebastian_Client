@@ -93,13 +93,10 @@
   background: var(--accent);
   color: #041126;
   border-color: transparent;
-  box-shadow: 0 12px 26px rgba(56, 217, 169, 0.35);
 }
 
 .icon-button.primary.error {
-  box-shadow:
-    0 0 0 2px var(--danger),
-    0 12px 26px rgba(255, 107, 107, 0.35);
+  box-shadow: 0 0 0 2px var(--danger);
 }
 
 .icon-button:disabled {
@@ -265,8 +262,8 @@
 }
 
 .preview {
-  width: min(560px, 80%);
-  padding: 16px;
+  width: min(640px, 86%);
+  padding: 20px;
   border-radius: 20px;
   background: rgba(4, 18, 38, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -277,7 +274,7 @@
 
 .preview img {
   width: 100%;
-  max-height: 320px;
+  max-height: 380px;
   object-fit: contain;
 }
 
