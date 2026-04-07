@@ -35,6 +35,7 @@ function App() {
   const historyRef = useRef<string[]>([]);
   const redoHistoryRef = useRef<string[]>([]);
   const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
+  const socketRef = useRef<WebSocket | null>(null);
 
   const [step, setStep] = useState<Step>("draw");
   const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
@@ -178,6 +179,18 @@ function App() {
       y: event.clientY - rect.top,
     };
   };
+
+  useEffect(() => {
+    socketRef.current = new WebSocket("ws://localhost:8000");
+
+    socketRef.current.onopen = () => {
+      console.log("✅연결됨");
+    };
+
+    return () => {
+      socketRef.current?.close();
+    };
+  }, []);
 
   const applyTool = (ctx: CanvasRenderingContext2D) => {
     const size = tool === "eraser" ? eraserSize : penSize;
@@ -383,10 +396,23 @@ function App() {
       flashError(setNameError);
       return;
     }
+
     setIsSubmitting(true);
     setSubmitError(false);
+
     try {
-      await postFish({ name: name.trim(), image: draftImage });
+      const savedFish = await postFish({
+        name: name.trim(),
+        image: draftImage,
+      });
+
+      socketRef.current?.send(
+        JSON.stringify({
+          type: "NEW_FISH",
+          data: savedFish, // or { name, image }
+        })
+      );
+
       setStep("sent");
     } catch (error) {
       setSubmitError(true);
