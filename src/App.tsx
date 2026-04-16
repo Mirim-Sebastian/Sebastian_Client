@@ -392,6 +392,7 @@ function App() {
       setStep("draw");
       return;
     }
+
     if (!isNameValid) {
       flashError(setNameError);
       return;
@@ -409,7 +410,7 @@ function App() {
       socketRef.current?.send(
         JSON.stringify({
           type: "NEW_FISH",
-          data: savedFish, // or { name, image }
+          data: savedFish,
         })
       );
 
