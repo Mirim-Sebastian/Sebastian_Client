@@ -304,25 +304,17 @@ function App() {
 
   const exportImage = () => {
     const canvas = drawCanvasRef.current;
-    const frameCanvas = frameCanvasRef.current;
     if (!canvas) return null;
+
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = canvas.width;
     exportCanvas.height = canvas.height;
     const exportCtx = exportCanvas.getContext("2d");
     if (!exportCtx) return null;
-    exportCtx.fillStyle = CANVAS_BG;
-    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-    if (frameCanvas) {
-      exportCtx.drawImage(
-        frameCanvas,
-        0,
-        0,
-        exportCanvas.width,
-        exportCanvas.height,
-      );
-    }
+
+    // 사용자가 그린 선(drawCanvas)만
     exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+
     return exportCanvas.toDataURL("image/png");
   };
 
