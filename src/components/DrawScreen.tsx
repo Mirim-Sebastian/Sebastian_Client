@@ -36,8 +36,8 @@ type DrawScreenProps = {
   onPointerDown: (event: PointerEvent<HTMLCanvasElement>) => void;
   onPointerMove: (event: PointerEvent<HTMLCanvasElement>) => void;
   onPointerUp: (event: PointerEvent<HTMLCanvasElement>) => void;
-  drawCanvasRef: RefObject<HTMLCanvasElement>;
-  frameCanvasRef: RefObject<HTMLCanvasElement>;
+  drawCanvasRef: RefObject<HTMLCanvasElement | null>;
+  frameCanvasRef: RefObject<HTMLCanvasElement | null>;
 };
 
 export const DrawScreen = ({

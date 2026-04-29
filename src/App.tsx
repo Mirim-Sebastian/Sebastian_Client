@@ -13,7 +13,6 @@ import { FISH_TEMPLATES, type FishTemplate } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
   BRUSH_MIN,
-  CANVAS_BG,
   COLORS,
   ERASER_SIZE_DEFAULT,
   MAX_NAME,
@@ -319,6 +318,7 @@ function App() {
   };
 
   const handleCompleteDrawing = () => {
+    console.log("🔥 hasDrawing:", hasDrawing);
     if (!hasDrawing) {
       flashError(setDrawError);
       return;

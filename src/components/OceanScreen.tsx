@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
+import "./OceanScreen.css";
 
 interface Fish {
   id: number;
@@ -6,30 +7,64 @@ interface Fish {
   image: string;
   x: number;
   y: number;
+  speed: number;
+  direction: 1 | -1;
+  verticalVelocity: number;
+  wavePhase: number;
+  waveSpeed: number;
+  scale: number;
+}
+
+interface Bubble {
+  id: number;
+  left: number;
+  size: number;
+  duration: number;
+  delay: number;
+  peakOpacity: number;
+}
+
+const BUBBLE_COUNT = 18;
+
+function generateBubbles(): Bubble[] {
+  return Array.from({ length: BUBBLE_COUNT }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    size: 3 + Math.random() * 12,
+    duration: 12 + Math.random() * 11,
+    delay: -(Math.random() * 15),
+    peakOpacity: 0.18 + Math.random() * 0.35,
+  }));
 }
 
 export default function OceanScreen() {
   const socketRef = useRef<WebSocket | null>(null);
   const [fishList, setFishList] = useState<Fish[]>([]);
+  const [bubbles] = useState<Bubble[]>(generateBubbles);
 
   useEffect(() => {
     socketRef.current = new WebSocket("ws://localhost:8000");
 
     socketRef.current.onopen = () => {
-      console.log("✅ Ocean 연결됨");
+      console.log("Ocean connected");
     };
 
     socketRef.current.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-
       const fish = msg.data ?? msg;
 
-      const newFish = {
+      const newFish: Fish = {
         id: Date.now(),
         name: fish.name,
         image: fish.image,
-        x: Math.random() * 80,
-        y: Math.random() * 70,
+        x: 5 + Math.random() * 80,
+        y: 10 + Math.random() * 70,
+        speed: 0.08 + Math.random() * 0.12,
+        direction: Math.random() < 0.5 ? 1 : -1,
+        verticalVelocity: (Math.random() - 0.5) * 0.08,
+        wavePhase: Math.random() * Math.PI * 2,
+        waveSpeed: 0.05 + Math.random() * 0.08,
+        scale: 140 + Math.random() * 30,
       };
 
       setFishList((prev) => [...prev, newFish]);
@@ -40,27 +75,94 @@ export default function OceanScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFishList((prev) =>
+        prev.map((fish) => {
+          let newDirection = fish.direction;
+          let newX = fish.x + fish.speed * newDirection;
+          let newVerticalVelocity = fish.verticalVelocity;
+          let newWaveSpeed = fish.waveSpeed;
+          const newWavePhase = fish.wavePhase + fish.waveSpeed;
+
+          if (newX > 92) {
+            newX = 92;
+            newDirection = -1;
+          }
+
+          if (newX < 2) {
+            newX = 2;
+            newDirection = 1;
+          }
+
+          if (Math.random() < 0.018) {
+            newVerticalVelocity = (Math.random() - 0.5) * 0.12;
+            newWaveSpeed = 0.035 + Math.random() * 0.1;
+          }
+
+          const waveY =
+            Math.sin(newWavePhase) * 0.06 +
+            Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
+          let newY = fish.y + waveY + newVerticalVelocity;
+
+          if (newY > 84) {
+            newY = 84;
+            newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
+          }
+
+          if (newY < 8) {
+            newY = 8;
+            newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
+          }
+
+          return {
+            ...fish,
+            x: newX,
+            y: newY,
+            direction: newDirection,
+            verticalVelocity: newVerticalVelocity,
+            wavePhase: newWavePhase,
+            waveSpeed: newWaveSpeed,
+          };
+        })
+      );
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        background: "linear-gradient(to bottom, #4facfe, #00c6ff)",
-      }}
-    >
+    <div className="ocean">
       {fishList.map((fish) => (
-        <img
+        <div
           key={fish.id}
-          src={fish.image}
-          alt={fish.name}
+          className="fish-wrapper"
           style={{
-            width: "120px",
-            position: "absolute",
             left: `${fish.x}%`,
             top: `${fish.y}%`,
-          }}
+            width: `${fish.scale}px`,
+            "--fish-direction": fish.direction,
+          } as CSSProperties}
+        >
+          <img src={fish.image} alt={fish.name} className="fish" />
+          <span className="fish-label">{fish.name}</span>
+        </div>
+      ))}
+
+      {bubbles.map((b) => (
+        <div
+          key={b.id}
+          className="bubble"
+          style={
+            {
+              left: `${b.left}%`,
+              width: `${b.size}px`,
+              height: `${b.size}px`,
+              animationDuration: `${b.duration}s`,
+              animationDelay: `${b.delay}s`,
+              "--bubble-peak": b.peakOpacity,
+            } as CSSProperties
+          }
         />
       ))}
     </div>
