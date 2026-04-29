@@ -36,9 +36,9 @@ export const NameScreen = ({
             onSubmit()
           }
         }}
-        aria-label="물고기 이름"
+        aria-label="물고기 이름" 
         disabled={isSubmitting}
-      />
+      />  
     </div>
     <button
       type="button"

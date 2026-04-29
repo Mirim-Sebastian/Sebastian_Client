@@ -1,6 +1,8 @@
+import type { ReactNode } from "react"
+
 export type FishTemplate = {
   id: string
-  icon: JSX.Element
+  icon: ReactNode
   createPath: (centerX: number, centerY: number, size: number) => Path2D
   bounds: {
     width: number
