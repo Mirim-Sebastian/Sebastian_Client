@@ -30,6 +30,7 @@ export const NameScreen = ({
       <input
         type="text"
         value={name}
+        placeholder="이름 입력하기"
         onChange={onNameChange}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
