@@ -18,6 +18,7 @@ type DrawScreenProps = {
   tool: "pen" | "eraser" | "fill";
   color: string;
   colors: ColorOption[];
+  customColor: string;
   templates: FishTemplate[];
   selectedTemplateId: string;
   canUndo: boolean;
@@ -30,6 +31,7 @@ type DrawScreenProps = {
   onRedo: () => void;
   onToolChange: (tool: "pen" | "eraser" | "fill") => void;
   onColorChange: (value: string) => void;
+  onCustomColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
   onSelectTemplate: (templateId: string) => void;
   onComplete: () => void;
@@ -44,6 +46,7 @@ export const DrawScreen = ({
   tool,
   color,
   colors,
+  customColor,
   templates,
   selectedTemplateId,
   canUndo,
@@ -56,6 +59,7 @@ export const DrawScreen = ({
   onRedo,
   onToolChange,
   onColorChange,
+  onCustomColorChange,
   onBrushSizeChange,
   onSelectTemplate,
   onComplete,
@@ -126,6 +130,20 @@ export const DrawScreen = ({
               aria-label={`색상 ${swatch.name}`}
             />
           ))}
+          <label
+            className={`color-dot custom ${
+              color === customColor ? "active" : ""
+            }`}
+            style={{ backgroundColor: customColor }}
+            aria-label="커스텀 색상 선택"
+          >
+            <input
+              type="color"
+              value={customColor}
+              onChange={(event) => onCustomColorChange(event.target.value)}
+              aria-label="커스텀 색상 선택"
+            />
+          </label>
         </div>
         <div className="control-group brush">
           <label className="brush-label" htmlFor="brush-size">

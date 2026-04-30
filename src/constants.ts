@@ -1,33 +1,27 @@
 export const COLORS = [
-  { name: 'Ice', value: '#e6f0ff' },
-  { name: 'Mint', value: '#38d9a9' },
-  { name: 'Coral', value: '#ff6b5a' },
-  { name: 'Amber', value: '#ffb347' },
-  { name: 'Lime', value: '#7acb6e' },
-  { name: 'Blue', value: '#4aa3ff' },
-  { name: 'Rose', value: '#ff7ab6' },
-  { name: 'Violet', value: '#7b6cff' },
-  { name: 'Sky', value: '#6bd4ff' },
-  { name: 'Sun', value: '#ffd166' },
-  { name: 'Peach', value: '#ff9f80' },
-  { name: 'Grape', value: '#b06cff' },
-  { name: 'Teal', value: '#2ec4b6' },
-  { name: 'Sand', value: '#f4d06f' },
-  { name: 'Midnight', value: '#243b6b' },
-  { name: 'Lilac', value: '#c5a3ff' },
-  { name: 'Aqua', value: '#4de1ff' },
-  { name: 'Berry', value: '#ff4d8d' },
-  { name: 'Plum', value: '#6d3c8d' },
-  { name: 'Forest', value: '#1b8a5a' },
-  { name: 'Olive', value: '#9bbf5a' },
-  { name: 'Charcoal', value: '#1c2b3a' },
-  { name: 'Snow', value: '#f7fbff' },
-]
+  { name: "White", value: "#ffffff" },
+  { name: "Red", value: "#ff0000" },
+  { name: "Orange", value: "#ff7f00" },
+  { name: "Yellow", value: "#ffff00" },
+  { name: "LightGreen", value: "#99ff00" },
+  { name: "Green", value: "#00ff00" },
+  { name: "Blue", value: "#0000ff" },
+  { name: "Indigo", value: "#4b0082" },
+  { name: "Violet", value: "#8b00ff" },
+  { name: "Pink", value: "#ff1493" },
+  { name: "Cyan", value: "#00ffff" },
+  { name: "Teal", value: "#008080" },
+  { name: "Lime", value: "#32cd32" },
+  { name: "Amber", value: "#ffbf00" },
+  { name: "Brown", value: "#8b4513" },
+  { name: "Gray", value: "#808080" },
+  { name: "Black", value: "#000000" },
+];
 
-export const MIN_NAME = 2
-export const MAX_NAME = 15
-export const CANVAS_BG = '#041126'
-export const BRUSH_MIN = 4
-export const BRUSH_MAX = 40
-export const PEN_SIZE_DEFAULT = 6
-export const ERASER_SIZE_DEFAULT = 26
+export const MIN_NAME = 2;
+export const MAX_NAME = 15;
+export const CANVAS_BG = "#041126";
+export const BRUSH_MIN = 4;
+export const BRUSH_MAX = 40;
+export const PEN_SIZE_DEFAULT = 6;
+export const ERASER_SIZE_DEFAULT = 26;

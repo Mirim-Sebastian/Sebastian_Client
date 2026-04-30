@@ -1,9 +1,19 @@
 .app {
   min-height: 100vh;
-  padding: 24px;
+  padding: 32px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-title {
+  margin: 12px;
+  text-align: center;
+  font-family: var(--title-font);
+  font-size: clamp(1.8rem, 2.6vw, 3.2rem);
+  letter-spacing: 0.02em;
 }
 
 .screen {
@@ -83,13 +93,10 @@
   background: var(--accent);
   color: #041126;
   border-color: transparent;
-  box-shadow: 0 12px 26px rgba(56, 217, 169, 0.35);
 }
 
 .icon-button.primary.error {
-  box-shadow:
-    0 0 0 2px var(--danger),
-    0 12px 26px rgba(255, 107, 107, 0.35);
+  box-shadow: 0 0 0 2px var(--danger);
 }
 
 .icon-button:disabled {
@@ -109,6 +116,29 @@
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.65);
   box-shadow: inset 0 0 0 1px rgba(2, 16, 32, 0.4);
+  cursor: pointer;
+}
+
+.color-dot.custom {
+  position: relative;
+  overflow: hidden;
+  background: conic-gradient(
+    #ff3b3b,
+    #ffb347,
+    #ffe066,
+    #7acb6e,
+    #38d9a9,
+    #4aa3ff,
+    #7b6cff,
+    #ff7ab6,
+    #ff3b3b
+  );
+}
+
+.color-dot.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -232,8 +262,8 @@
 }
 
 .preview {
-  width: min(560px, 80%);
-  padding: 16px;
+  width: min(640px, 86%);
+  padding: 20px;
   border-radius: 20px;
   background: rgba(4, 18, 38, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -244,7 +274,7 @@
 
 .preview img {
   width: 100%;
-  max-height: 320px;
+  max-height: 380px;
   object-fit: contain;
 }
 
