@@ -5,6 +5,16 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  gap: 16px;
+}
+
+.app-title {
+  margin: 12px;
+  text-align: center;
+  font-family: var(--title-font);
+  font-size: clamp(1.8rem, 2.6vw, 3.2rem);
+  letter-spacing: 0.02em;
+  font-size: 32px;
 }
 
 .screen {
@@ -352,7 +362,6 @@
   position: relative;
   overflow: hidden;
   padding-inline: 24px;
-  font-size: 24px;
 }
 
 .sent-screen::before {
@@ -369,10 +378,10 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  font-size: clamp(1.8rem, 4.8vw, 3.6rem);
+  font-size: clamp(1.7rem, 4.4vw, 3.1rem);
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
   color: #f7fbff;
   text-shadow:
     0 0 24px rgba(74, 163, 255, 0.35),
