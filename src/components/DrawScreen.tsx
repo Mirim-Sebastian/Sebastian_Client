@@ -126,6 +126,20 @@ export const DrawScreen = ({
               aria-label={`색상 ${swatch.name}`}
             />
           ))}
+          <label
+            className={`color-picker-trigger ${
+              !colors.some((swatch) => swatch.value === color) ? "active" : ""
+            }`}
+            aria-label="직접 색상 고르기"
+          >
+            <span className="sr-only">직접 색상 고르기</span>
+            <input
+              type="color"
+              className="color-picker-input"
+              value={color}
+              onChange={(event) => onColorChange(event.target.value)}
+            />
+          </label>
         </div>
         <div className="control-group brush">
           <label className="brush-label" htmlFor="brush-size">
