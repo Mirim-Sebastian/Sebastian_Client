@@ -16,6 +16,7 @@ type ColorOption = {
 
 type DrawScreenProps = {
   tool: "pen" | "eraser" | "fill";
+  eraserMode: "stroke" | "brush";
   color: string;
   colors: ColorOption[];
   customColor: string;
@@ -30,6 +31,7 @@ type DrawScreenProps = {
   onUndo: () => void;
   onRedo: () => void;
   onToolChange: (tool: "pen" | "eraser" | "fill") => void;
+  onEraserModeChange: (mode: "stroke" | "brush") => void;
   onColorChange: (value: string) => void;
   onCustomColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
@@ -44,6 +46,7 @@ type DrawScreenProps = {
 
 export const DrawScreen = ({
   tool,
+  eraserMode,
   color,
   colors,
   customColor,
@@ -58,6 +61,7 @@ export const DrawScreen = ({
   onUndo,
   onRedo,
   onToolChange,
+  onEraserModeChange,
   onColorChange,
   onCustomColorChange,
   onBrushSizeChange,
@@ -146,6 +150,32 @@ export const DrawScreen = ({
           </label>
         </div>
         <div className="control-group brush">
+          {tool === "eraser" ? (
+            <div
+              className="eraser-mode-group"
+              role="group"
+              aria-label="지우개 방식 선택"
+            >
+              <button
+                type="button"
+                className={`mode-chip ${
+                  eraserMode === "stroke" ? "active" : ""
+                }`}
+                onClick={() => onEraserModeChange("stroke")}
+              >
+                선으로 지우기
+              </button>
+              <button
+                type="button"
+                className={`mode-chip ${
+                  eraserMode === "brush" ? "active" : ""
+                }`}
+                onClick={() => onEraserModeChange("brush")}
+              >
+                브러쉬로 지우기
+              </button>
+            </div>
+          ) : null}
           <label className="brush-label" htmlFor="brush-size">
             <span>{isFill ? "채우기" : sizeLabel}</span>
           </label>
