@@ -1,5 +1,5 @@
 :root {
-  font-family: "Pretendard";
+  font-family: "Pretendard", sans-serif;
   line-height: 1.4;
   font-weight: 500;
   color: #e6f0ff;
@@ -14,6 +14,7 @@
   --border: rgba(255, 255, 255, 0.18);
   --accent: #38d9a9;
   --danger: #ff6b6b;
+  --title-font: "Paperlogy", "Pretendard", sans-serif;
 }
 
 * {

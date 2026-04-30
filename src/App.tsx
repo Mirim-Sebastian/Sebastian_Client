@@ -39,6 +39,7 @@ function App() {
   const [step, setStep] = useState<Step>("draw");
   const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
   const [color, setColor] = useState(COLORS[0].value);
+  const [customColor, setCustomColor] = useState(COLORS[0].value);
   const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT);
   const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT);
   const [hasDrawing, setHasDrawing] = useState(false);
@@ -421,6 +422,7 @@ function App() {
           tool={tool}
           color={color}
           colors={COLORS}
+          customColor={customColor}
           templates={FISH_TEMPLATES}
           selectedTemplateId={selectedTemplateId}
           canUndo={canUndo}
@@ -433,6 +435,14 @@ function App() {
           onRedo={handleRedo}
           onToolChange={setTool}
           onColorChange={(value) => {
+            setColor(value);
+            setCustomColor(value);
+            if (tool === "eraser") {
+              setTool("pen");
+            }
+          }}
+          onCustomColorChange={(value) => {
+            setCustomColor(value);
             setColor(value);
             if (tool === "eraser") {
               setTool("pen");

@@ -18,6 +18,7 @@ type DrawScreenProps = {
   tool: "pen" | "eraser" | "fill";
   color: string;
   colors: ColorOption[];
+  customColor: string;
   templates: FishTemplate[];
   selectedTemplateId: string;
   canUndo: boolean;
@@ -30,6 +31,7 @@ type DrawScreenProps = {
   onRedo: () => void;
   onToolChange: (tool: "pen" | "eraser" | "fill") => void;
   onColorChange: (value: string) => void;
+  onCustomColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
   onSelectTemplate: (templateId: string) => void;
   onComplete: () => void;
@@ -44,6 +46,7 @@ export const DrawScreen = ({
   tool,
   color,
   colors,
+  customColor,
   templates,
   selectedTemplateId,
   canUndo,
@@ -56,6 +59,7 @@ export const DrawScreen = ({
   onRedo,
   onToolChange,
   onColorChange,
+  onCustomColorChange,
   onBrushSizeChange,
   onSelectTemplate,
   onComplete,
@@ -127,17 +131,17 @@ export const DrawScreen = ({
             />
           ))}
           <label
-            className={`color-picker-trigger ${
-              !colors.some((swatch) => swatch.value === color) ? "active" : ""
+            className={`color-dot custom ${
+              color === customColor ? "active" : ""
             }`}
-            aria-label="직접 색상 고르기"
+            style={{ backgroundColor: customColor }}
+            aria-label="커스텀 색상 선택"
           >
-            <span className="sr-only">직접 색상 고르기</span>
             <input
               type="color"
-              className="color-picker-input"
-              value={color}
-              onChange={(event) => onColorChange(event.target.value)}
+              value={customColor}
+              onChange={(event) => onCustomColorChange(event.target.value)}
+              aria-label="커스텀 색상 선택"
             />
           </label>
         </div>
