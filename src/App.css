@@ -339,7 +339,7 @@
 }
 
 .name-screen {
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: 1fr auto auto auto;
   place-items: center;
 }
 
@@ -380,6 +380,36 @@
   text-align: center;
   outline: none;
   letter-spacing: 0.08em;
+}
+
+.message-field {
+  width: min(520px, 86%);
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(4, 18, 38, 0.72);
+  border: 1px solid var(--border);
+}
+
+.message-field.error {
+  border-color: var(--danger);
+  animation: shake 0.35s ease;
+}
+
+.message-field textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: none;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.6;
+  outline: none;
+}
+
+.message-field textarea::placeholder,
+.name-field input::placeholder {
+  color: rgba(230, 240, 255, 0.42);
 }
 
 .sent-screen {

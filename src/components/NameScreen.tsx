@@ -4,20 +4,26 @@ import { CheckIcon, SpinnerIcon } from './icons'
 type NameScreenProps = {
   draftImage: string | null
   name: string
+  message: string
   nameError: boolean
+  messageError: boolean
   submitError: boolean
   isSubmitting: boolean
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void
   onSubmit: () => void
 }
 
 export const NameScreen = ({
   draftImage,
   name,
+  message,
   nameError,
+  messageError,
   submitError,
   isSubmitting,
   onNameChange,
+  onMessageChange,
   onSubmit,
 }: NameScreenProps) => (
   <div className="screen name-screen">
@@ -40,6 +46,16 @@ export const NameScreen = ({
         aria-label="물고기 이름" 
         disabled={isSubmitting}
       />  
+    </div>
+    <div className={`message-field ${messageError ? 'error' : ''}`}>
+      <textarea
+        value={message}
+        placeholder="물고기가 할 말을 입력하기"
+        onChange={onMessageChange}
+        aria-label="물고기 메시지"
+        disabled={isSubmitting}
+        rows={3}
+      />
     </div>
     <button
       type="button"

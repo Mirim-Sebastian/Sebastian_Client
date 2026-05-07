@@ -21,6 +21,7 @@
   align-items: center;
   transition: left 0.05s linear, top 0.3s ease-in-out;
   z-index: 2;
+  cursor: pointer;
 }
  
 /* =====================
@@ -32,6 +33,8 @@
   display: block;
   animation: wiggle 1.6s ease-in-out infinite;
   transform-origin: center;
+  pointer-events: none;
+  user-select: none;
 }
  
 /* =====================
@@ -50,6 +53,41 @@
   pointer-events: none;
   user-select: none;
 }
+
+.fish-speech-bubble {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-block;
+  width: max-content;
+  max-width: 220px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #0b2b45;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  z-index: 4;
+  animation: bubblePop 0.18s ease-out;
+}
+
+.fish-speech-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  transform: translateX(-50%) rotate(45deg);
+}
  
 /* =====================
    물고기 흔들림
@@ -60,6 +98,17 @@
   50%  { transform: scaleX(var(--fish-direction, 1)) rotate(0deg); }
   75%  { transform: scaleX(var(--fish-direction, 1)) rotate(-1.5deg); }
   100% { transform: scaleX(var(--fish-direction, 1)) rotate(0deg); }
+}
+
+@keyframes bubblePop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
  
 /* =====================

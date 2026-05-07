@@ -16,6 +16,7 @@ import {
   COLORS,
   ERASER_SIZE_DEFAULT,
   MAX_NAME,
+  MAX_MESSAGE,
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
@@ -74,9 +75,11 @@ function App() {
   const [hasDrawing, setHasDrawing] = useState(false);
   const [draftImage, setDraftImage] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawError, setDrawError] = useState(false);
   const [nameError, setNameError] = useState(false);
+  const [messageError, setMessageError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(
     FISH_TEMPLATES[0].id,
@@ -612,6 +615,13 @@ function App() {
     setSubmitError(false);
   };
 
+  const handleMessageChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.target.value.slice(0, MAX_MESSAGE);
+    setMessage(value);
+    setMessageError(false);
+    setSubmitError(false);
+  };
+
   const handleTemplateSelect = (templateId: string) => {
     if (step !== "draw") return;
     setSelectedTemplateId(templateId);
@@ -652,6 +662,7 @@ function App() {
 
   const nameLength = name.trim().length;
   const isNameValid = nameLength >= MIN_NAME && nameLength <= MAX_NAME;
+  const isMessageValid = message.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!draftImage) {
@@ -664,19 +675,31 @@ function App() {
       return;
     }
 
+    if (!isMessageValid) {
+      flashError(setMessageError);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(false);
 
     try {
+      const trimmedName = name.trim();
+      const trimmedMessage = message.trim();
       const savedFish = await postFish({
-        name: name.trim(),
+        name: trimmedName,
         image: draftImage,
+        message: trimmedMessage,
       });
 
       socketRef.current?.send(
         JSON.stringify({
           type: "NEW_FISH",
-          data: savedFish,
+          data: {
+            ...savedFish,
+            name: trimmedName,
+            message: trimmedMessage,
+          },
         })
       );
 
@@ -738,10 +761,13 @@ function App() {
         <NameScreen
           draftImage={draftImage}
           name={name}
+          message={message}
           nameError={nameError}
+          messageError={messageError}
           submitError={submitError}
           isSubmitting={isSubmitting}
           onNameChange={handleNameChange}
+          onMessageChange={handleMessageChange}
           onSubmit={handleSubmit}
         />
       )}

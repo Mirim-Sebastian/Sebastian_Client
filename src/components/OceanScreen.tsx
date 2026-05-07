@@ -5,6 +5,7 @@ interface Fish {
   id: number;
   name: string;
   image: string;
+  message: string;
   x: number;
   y: number;
   speed: number;
@@ -41,6 +42,7 @@ export default function OceanScreen() {
   const socketRef = useRef<WebSocket | null>(null);
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
+  const [activeFishId, setActiveFishId] = useState<number | null>(null);
 
   useEffect(() => {
     socketRef.current = new WebSocket("ws://localhost:8000");
@@ -57,6 +59,7 @@ export default function OceanScreen() {
         id: Date.now(),
         name: fish.name,
         image: fish.image,
+        message: typeof fish.message === "string" ? fish.message.trim() : "",
         x: 5 + Math.random() * 80,
         y: 10 + Math.random() * 70,
         speed: 0.08 + Math.random() * 0.12,
@@ -131,12 +134,28 @@ export default function OceanScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (activeFishId === null) return;
+
+    const timeout = window.setTimeout(() => {
+      setActiveFishId((currentId) =>
+        currentId === activeFishId ? null : currentId,
+      );
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeFishId]);
+
   return (
     <div className="ocean">
       {fishList.map((fish) => (
         <div
           key={fish.id}
           className="fish-wrapper"
+          onPointerDown={() => {
+            if (!fish.message) return;
+            setActiveFishId(fish.id);
+          }}
           style={{
             left: `${fish.x}%`,
             top: `${fish.y}%`,
@@ -144,6 +163,9 @@ export default function OceanScreen() {
             "--fish-direction": fish.direction,
           } as CSSProperties}
         >
+          {activeFishId === fish.id && (
+            <div className="fish-speech-bubble">{fish.message}</div>
+          )}
           <img src={fish.image} alt={fish.name} className="fish" />
           <span className="fish-label">{fish.name}</span>
         </div>
