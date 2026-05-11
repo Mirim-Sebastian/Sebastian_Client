@@ -5,6 +5,26 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  position: relative;
+  background-image: url("./assets/images/bg_ocean.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3, 17, 37, 0.16), rgba(3, 17, 37, 0.34)),
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 28%);
+  pointer-events: none;
+}
+
+.app > * {
+  position: relative;
+  z-index: 1;
 }
 
 .screen {
@@ -56,8 +76,9 @@
   gap: 6px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(8, 20, 40, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 37, 67, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
 }
 
 .mode-chip {
@@ -86,8 +107,8 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: rgba(12, 40, 70, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--ink);
   display: flex;
   align-items: center;
@@ -95,7 +116,9 @@
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
 .icon-button svg {
@@ -240,8 +263,8 @@
   width: 56px;
   height: 44px;
   border-radius: 14px;
-  background: rgba(8, 20, 40, 0.7);
-  border: 1px solid var(--border);
+  background: rgba(12, 40, 70, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--ink);
   display: flex;
   align-items: center;
@@ -249,7 +272,9 @@
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    background 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
 .template-button svg {
@@ -296,14 +321,15 @@
 
 .canvas-wrap {
   flex: 1;
-  background: rgba(4, 18, 38, 0.9);
+  background: rgba(8, 33, 61, 0.42);
   border-radius: 22px;
   padding: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.14);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow:
-    inset 0 0 0 1px rgba(4, 17, 38, 0.2),
-    0 30px 80px rgba(2, 8, 20, 0.35);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 30px 80px rgba(2, 8, 20, 0.24);
   min-height: 360px;
+  backdrop-filter: blur(12px);
 }
 
 .canvas-wrap.error {
@@ -354,11 +380,12 @@
   width: min(640px, 86%);
   padding: 20px;
   border-radius: 20px;
-  background: rgba(4, 18, 38, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 20px 60px rgba(2, 8, 20, 0.35);
+  background: rgba(8, 33, 61, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 60px rgba(2, 8, 20, 0.24);
   display: flex;
   justify-content: center;
+  backdrop-filter: blur(12px);
 }
 
 .preview img {
@@ -369,7 +396,7 @@
 
 .name-field {
   width: min(420px, 80%);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
   padding-bottom: 6px;
 }
 
@@ -393,8 +420,9 @@
   width: min(520px, 86%);
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(4, 18, 38, 0.72);
-  border: 1px solid var(--border);
+  background: rgba(8, 33, 61, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .message-field.error {
