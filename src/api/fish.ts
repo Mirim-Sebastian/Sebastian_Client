@@ -1,12 +1,14 @@
 export type FishPayload = {
   name: string
   image: string
+  message: string
 }
 
 export type FishResponse = {
   id: string
   name: string
   image: string
+  message: string
 }
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
