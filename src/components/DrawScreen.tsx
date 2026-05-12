@@ -150,32 +150,35 @@ export const DrawScreen = ({
           </label>
         </div>
         <div className="control-group brush">
-          {tool === "eraser" ? (
-            <div
-              className="eraser-mode-group"
-              role="group"
-              aria-label="지우개 방식 선택"
+          <div
+            className={`eraser-mode-group ${
+              tool === "eraser" ? "" : "is-hidden"
+            }`}
+            role="group"
+            aria-label="지우개 방식 선택"
+            aria-hidden={tool !== "eraser"}
+          >
+            <button
+              type="button"
+              className={`mode-chip ${
+                eraserMode === "stroke" ? "active" : ""
+              }`}
+              onClick={() => onEraserModeChange("stroke")}
+              tabIndex={tool === "eraser" ? 0 : -1}
             >
-              <button
-                type="button"
-                className={`mode-chip ${
-                  eraserMode === "stroke" ? "active" : ""
-                }`}
-                onClick={() => onEraserModeChange("stroke")}
-              >
-                선으로 지우기
-              </button>
-              <button
-                type="button"
-                className={`mode-chip ${
-                  eraserMode === "brush" ? "active" : ""
-                }`}
-                onClick={() => onEraserModeChange("brush")}
-              >
-                브러쉬로 지우기
-              </button>
-            </div>
-          ) : null}
+              선으로 지우기
+            </button>
+            <button
+              type="button"
+              className={`mode-chip ${
+                eraserMode === "brush" ? "active" : ""
+              }`}
+              onClick={() => onEraserModeChange("brush")}
+              tabIndex={tool === "eraser" ? 0 : -1}
+            >
+              브러쉬로 지우기
+            </button>
+          </div>
           <label className="brush-label" htmlFor="brush-size">
             <span>{isFill ? "채우기" : sizeLabel}</span>
           </label>
