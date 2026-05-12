@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   useEffect,
   useRef,
   useState,
@@ -48,6 +49,28 @@ type EraseAction = {
 
 type DrawAction = StrokeAction | FillAction | EraseAction;
 
+type Bubble = {
+  id: number;
+  left: number;
+  size: number;
+  duration: number;
+  delay: number;
+  peakOpacity: number;
+};
+
+const APP_BUBBLE_COUNT = 18;
+
+function generateBubbles(): Bubble[] {
+  return Array.from({ length: APP_BUBBLE_COUNT }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    size: 3 + Math.random() * 12,
+    duration: 12 + Math.random() * 11,
+    delay: -(Math.random() * 15),
+    peakOpacity: 0.18 + Math.random() * 0.35,
+  }));
+}
+
 function App() {
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -86,6 +109,7 @@ function App() {
   );
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [bubbles] = useState<Bubble[]>(generateBubbles);
 
   const selectedTemplate =
     FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
@@ -713,6 +737,23 @@ function App() {
 
   return (
     <div className="app">
+      {bubbles.map((bubble) => (
+        <div
+          key={bubble.id}
+          className="app-bubble"
+          style={
+            {
+              left: `${bubble.left}%`,
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              animationDuration: `${bubble.duration}s`,
+              animationDelay: `${bubble.delay}s`,
+              "--bubble-peak": bubble.peakOpacity,
+            } as CSSProperties
+          }
+        />
+      ))}
+
       {step === "draw" && (
         <DrawScreen
           tool={tool}
