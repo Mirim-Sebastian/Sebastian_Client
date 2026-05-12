@@ -57,6 +57,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+  min-height: 88px;
 }
 
 .control-group.palette {
@@ -79,6 +80,13 @@
   background: rgba(11, 37, 67, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(10px);
+  min-height: 42px;
+  align-items: center;
+}
+
+.eraser-mode-group.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .mode-chip {

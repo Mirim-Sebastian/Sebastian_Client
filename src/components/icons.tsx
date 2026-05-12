@@ -3,7 +3,11 @@ type IconProps = {
 }
 
 export const CheckIcon = ({ className }: IconProps) => (
-  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+  <svg
+    className={["line-icon", className].filter(Boolean).join(" ")}
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
     <path d="M5 12.5l4.2 4.2L19 7.8" strokeLinecap="round" />
   </svg>
 )
