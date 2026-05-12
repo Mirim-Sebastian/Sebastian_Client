@@ -121,18 +121,17 @@
   backdrop-filter: blur(10px);
 }
 
-.icon-button svg {
-  width: 26px;
-  height: 26px;
+.icon-button .line-icon {
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
 }
 
-.icon-button .tool-icon-image {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+.icon-button .tool-icon-svg {
+  width: 24px;
+  height: 24px;
   display: block;
 }
 

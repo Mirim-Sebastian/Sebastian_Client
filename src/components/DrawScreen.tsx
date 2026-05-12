@@ -1,9 +1,9 @@
 import type { PointerEvent, RefObject } from "react";
-import eraserIcon from "../assets/images/eraser.svg";
-import paintIcon from "../assets/images/paint.svg";
-import penIcon from "../assets/images/pen.svg";
 import {
   CheckIcon,
+  EraserIcon,
+  FillIcon,
+  PenIcon,
   RedoIcon,
   UndoIcon,
 } from "./icons";
@@ -104,7 +104,7 @@ export const DrawScreen = ({
             onClick={() => onToolChange("pen")}
             aria-label="펜"
           >
-            <img src={penIcon} alt="" aria-hidden="true" className="tool-icon-image" />
+            <PenIcon />
           </button>
           <button
             type="button"
@@ -112,12 +112,7 @@ export const DrawScreen = ({
             onClick={() => onToolChange("eraser")}
             aria-label="지우개"
           >
-            <img
-              src={eraserIcon}
-              alt=""
-              aria-hidden="true"
-              className="tool-icon-image"
-            />
+            <EraserIcon />
           </button>
           <button
             type="button"
@@ -125,12 +120,7 @@ export const DrawScreen = ({
             onClick={() => onToolChange("fill")}
             aria-label="채우기"
           >
-            <img
-              src={paintIcon}
-              alt=""
-              aria-hidden="true"
-              className="tool-icon-image"
-            />
+            <FillIcon />
           </button>
         </div>
         <div className="control-group palette">
