@@ -1,18 +1,25 @@
-import type { ChangeEvent } from 'react'
-import { CheckIcon, SpinnerIcon } from './icons'
+import type { ChangeEvent } from "react";
+import { CheckIcon, SpinnerIcon } from "./icons";
+import {
+  IconButton,
+  MessageField,
+  NameField,
+  Preview,
+  Screen,
+} from "./NameScreen.styles";
 
 type NameScreenProps = {
-  draftImage: string | null
-  name: string
-  message: string
-  nameError: boolean
-  messageError: boolean
-  submitError: boolean
-  isSubmitting: boolean
-  onNameChange: (event: ChangeEvent<HTMLInputElement>) => void
-  onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void
-  onSubmit: () => void
-}
+  draftImage: string | null;
+  name: string;
+  message: string;
+  nameError: boolean;
+  messageError: boolean;
+  submitError: boolean;
+  isSubmitting: boolean;
+  onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  onSubmit: () => void;
+};
 
 export const NameScreen = ({
   draftImage,
@@ -26,28 +33,26 @@ export const NameScreen = ({
   onMessageChange,
   onSubmit,
 }: NameScreenProps) => (
-  <div className="screen name-screen">
+  <Screen>
     {draftImage && (
-      <div className="preview">
+      <Preview>
         <img src={draftImage} alt="" />
-      </div>
+      </Preview>
     )}
-    <div className={`name-field ${nameError ? 'error' : ''}`}>
+    <NameField $error={nameError}>
       <input
         type="text"
         value={name}
         placeholder="이름 입력하기"
         onChange={onNameChange}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            onSubmit()
-          }
+          if (event.key === "Enter") onSubmit();
         }}
-        aria-label="물고기 이름" 
+        aria-label="물고기 이름"
         disabled={isSubmitting}
-      />  
-    </div>
-    <div className={`message-field ${messageError ? 'error' : ''}`}>
+      />
+    </NameField>
+    <MessageField $error={messageError}>
       <textarea
         value={message}
         placeholder="물고기가 할 말을 입력하기"
@@ -56,15 +61,16 @@ export const NameScreen = ({
         disabled={isSubmitting}
         rows={3}
       />
-    </div>
-    <button
+    </MessageField>
+    <IconButton
       type="button"
-      className={`icon-button primary ${submitError ? 'error' : ''}`}
+      $primary
+      $error={submitError}
       onClick={onSubmit}
       disabled={isSubmitting}
       aria-label="전송"
     >
       {isSubmitting ? <SpinnerIcon /> : <CheckIcon />}
-    </button>
-  </div>
-)
+    </IconButton>
+  </Screen>
+);

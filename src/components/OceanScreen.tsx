@@ -1,5 +1,12 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-import "./OceanScreen.css";
+import {
+  FishImage,
+  FishLabel,
+  FishSpeechBubble,
+  FishWrapper,
+  Ocean,
+  OceanBubble,
+} from "./OceanScreen.styles";
 
 interface Fish {
   id: number;
@@ -88,15 +95,8 @@ export default function OceanScreen() {
           let newWaveSpeed = fish.waveSpeed;
           const newWavePhase = fish.wavePhase + fish.waveSpeed;
 
-          if (newX > 92) {
-            newX = 92;
-            newDirection = -1;
-          }
-
-          if (newX < 2) {
-            newX = 2;
-            newDirection = 1;
-          }
+          if (newX > 92) { newX = 92; newDirection = -1; }
+          if (newX < 2)  { newX = 2;  newDirection = 1;  }
 
           if (Math.random() < 0.018) {
             newVerticalVelocity = (Math.random() - 0.5) * 0.12;
@@ -108,15 +108,8 @@ export default function OceanScreen() {
             Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
           let newY = fish.y + waveY + newVerticalVelocity;
 
-          if (newY > 84) {
-            newY = 84;
-            newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
-          }
-
-          if (newY < 8) {
-            newY = 8;
-            newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
-          }
+          if (newY > 84) { newY = 84; newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05); }
+          if (newY < 8)  { newY = 8;  newVerticalVelocity =  Math.abs(newVerticalVelocity || 0.05); }
 
           return {
             ...fish,
@@ -147,11 +140,10 @@ export default function OceanScreen() {
   }, [activeFishId]);
 
   return (
-    <div className="ocean">
+    <Ocean>
       {fishList.map((fish) => (
-        <div
+        <FishWrapper
           key={fish.id}
-          className="fish-wrapper"
           onPointerDown={() => {
             if (!fish.message) return;
             setActiveFishId(fish.id);
@@ -164,17 +156,16 @@ export default function OceanScreen() {
           } as CSSProperties}
         >
           {activeFishId === fish.id && (
-            <div className="fish-speech-bubble">{fish.message}</div>
+            <FishSpeechBubble>{fish.message}</FishSpeechBubble>
           )}
-          <img src={fish.image} alt={fish.name} className="fish" />
-          <span className="fish-label">{fish.name}</span>
-        </div>
+          <FishImage src={fish.image} alt={fish.name} />
+          <FishLabel>{fish.name}</FishLabel>
+        </FishWrapper>
       ))}
 
       {bubbles.map((b) => (
-        <div
+        <OceanBubble
           key={b.id}
-          className="bubble"
           style={
             {
               left: `${b.left}%`,
@@ -187,6 +178,6 @@ export default function OceanScreen() {
           }
         />
       ))}
-    </div>
+    </Ocean>
   );
 }

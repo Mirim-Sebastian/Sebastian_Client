@@ -21,7 +21,7 @@ import {
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
-import "./App.css";
+import { AppWrapper, AppBubble } from "./App.styles";
 
 type Step = "draw" | "name" | "sent";
 type Point = {
@@ -736,11 +736,10 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <AppWrapper>
       {bubbles.map((bubble) => (
-        <div
+        <AppBubble
           key={bubble.id}
-          className="app-bubble"
           style={
             {
               left: `${bubble.left}%`,
@@ -814,7 +813,7 @@ function App() {
       )}
 
       {step === "sent" && <SentScreen />}
-    </div>
+    </AppWrapper>
   );
 }
 
