@@ -17,6 +17,7 @@ const appBubbleUp = keyframes`
 
 export const AppWrapper = styled.div`
   min-height: 100vh;
+  overflow: hidden;
   padding: 32px 8px;
   display: flex;
   align-items: center;
@@ -36,11 +37,6 @@ export const AppWrapper = styled.div`
       linear-gradient(180deg, rgba(3, 17, 37, 0.16), rgba(3, 17, 37, 0.34)),
       radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 28%);
     pointer-events: none;
-  }
-
-  & > * {
-    position: relative;
-    z-index: 1;
   }
 `;
 

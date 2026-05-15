@@ -17,8 +17,10 @@ export const spin = keyframes`
 // ─── Base screen ─────────────────────────────────────────────────────────────
 
 export const BaseScreen = styled.div`
+  position: relative;
+  z-index: 1;
   width: min(1200px, 100%);
-  height: min(86vh, 900px);
+  height: min(86svh, 900px);
   display: grid;
   gap: 18px;
 

@@ -13,43 +13,49 @@ export const Screen = styled(BaseScreen)`
 
 export const Controls = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 14px;
-  flex-wrap: wrap;
-  padding: 10px 16px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
   background: rgba(8, 26, 50, 0.62);
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.13);
   backdrop-filter: blur(20px);
   box-shadow: 0 8px 30px rgba(2, 8, 20, 0.22);
+`;
 
-  @media (max-width: 900px) {
-    justify-content: center;
-    gap: 8px 12px;
-    padding: 10px 12px;
-  }
+export const ControlsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
 `;
 
 export const ControlDivider = styled.div`
   width: 1px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.12);
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
-
-  @media (max-width: 900px) {
-    display: none;
-  }
+  margin-inline: 2px;
 `;
 
 export const ControlInnerDivider = styled.div`
   width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 `;
 
 // ─── Control groups ───────────────────────────────────────────────────────────
+
+export const ToolGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+`;
 
 export const ControlGroup = styled.div`
   display: flex;
@@ -57,86 +63,86 @@ export const ControlGroup = styled.div`
   gap: 8px;
 `;
 
-export const PaletteGroup = styled(ControlGroup)`
+export const PaletteGroup = styled.div`
   flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
-
-  @media (max-width: 900px) {
-    order: 3;
-    width: 100%;
-  }
+  gap: 7px;
 `;
 
-export const BrushGroup = styled(ControlGroup)`
-  flex: 0 1 220px;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 5px;
-
-  @media (max-width: 900px) {
-    flex: 0 1 auto;
-    width: 100%;
-  }
+export const BrushGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
 `;
 
-export const TemplatesGroup = styled(ControlGroup)`
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
+export const TemplatesGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
 `;
 
 // ─── Eraser mode toggle ───────────────────────────────────────────────────────
 
-export const EraserModeGroup = styled.div<{ $hidden: boolean }>`
+export const EraserModeGroup = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
   padding: 3px;
-  border-radius: 999px;
-  background: rgba(11, 37, 67, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   align-items: center;
-  align-self: flex-start;
-  visibility: ${({ $hidden }) => ($hidden ? "hidden" : "visible")};
-  pointer-events: ${({ $hidden }) => ($hidden ? "none" : "auto")};
 `;
 
 export const ModeChip = styled.button<{ $active: boolean }>`
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: ${({ $active }) => ($active ? "var(--ink)" : "transparent")};
-  color: ${({ $active }) => ($active ? "var(--bg)" : "rgba(230, 240, 255, 0.84)")};
-  font-size: 0.76rem;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: none;
+  background: ${({ $active }) =>
+    $active ? "rgba(255,255,255,0.14)" : "transparent"};
+  color: ${({ $active }) =>
+    $active ? "var(--ink)" : "rgba(230, 240, 255, 0.5)"};
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
-  box-shadow: ${({ $active }) =>
-    $active ? "0 6px 16px rgba(2, 8, 20, 0.2)" : "none"};
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 `;
 
 // ─── Color palette ────────────────────────────────────────────────────────────
 
 export const ColorDot = styled.button<{ $active: boolean }>`
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 0 0 1px rgba(2, 16, 32, 0.4);
+  border: 2px solid
+    ${({ $active }) =>
+      $active ? "rgba(255,255,255,0.9)" : "rgba(255, 255, 255, 0.35)"};
+  box-shadow: ${({ $active }) =>
+    $active
+      ? "0 0 0 2px var(--accent), inset 0 0 0 1px rgba(2,16,32,0.3)"
+      : "inset 0 0 0 1px rgba(2,16,32,0.3)"};
   cursor: pointer;
-  outline-offset: 2px;
-  ${({ $active }) => $active && `outline: 2px solid var(--accent);`}
+  transition: border-color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
 `;
 
 export const CustomColorLabel = styled.label<{ $active: boolean }>`
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 0 0 1px rgba(2, 16, 32, 0.4);
+  border: 2px solid
+    ${({ $active }) =>
+      $active ? "rgba(255,255,255,0.9)" : "rgba(255, 255, 255, 0.35)"};
+  box-shadow: ${({ $active }) =>
+    $active
+      ? "0 0 0 2px var(--accent), inset 0 0 0 1px rgba(2,16,32,0.3)"
+      : "inset 0 0 0 1px rgba(2,16,32,0.3)"};
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -153,8 +159,7 @@ export const CustomColorLabel = styled.label<{ $active: boolean }>`
     #ff7ab6,
     #ff3b3b
   );
-  outline-offset: 2px;
-  ${({ $active }) => $active && `outline: 2px solid var(--accent);`}
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   input {
     position: absolute;
@@ -167,68 +172,63 @@ export const CustomColorLabel = styled.label<{ $active: boolean }>`
 // ─── Template button ──────────────────────────────────────────────────────────
 
 export const TemplateButton = styled.button<{ $active: boolean }>`
-  width: 58px;
-  height: 46px;
-  border-radius: 13px;
-  background: rgba(12, 40, 70, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: var(--ink);
+  width: 52px;
+  height: 38px;
+  border-radius: 10px;
+  background: ${({ $active }) =>
+    $active ? "rgba(56, 217, 169, 0.15)" : "rgba(255, 255, 255, 0.05)"};
+  border: 1px solid
+    ${({ $active }) =>
+      $active ? "rgba(56, 217, 169, 0.5)" : "rgba(255, 255, 255, 0.1)"};
+  color: ${({ $active }) => ($active ? "var(--accent)" : "rgba(230,240,255,0.6)")};
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 
   svg {
-    width: 44px;
-    height: 26px;
+    width: 38px;
+    height: 22px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
   }
 
   &:hover {
-    background: rgba(25, 65, 108, 0.62);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: var(--ink);
   }
-
-  ${({ $active }) =>
-    $active &&
-    `
-    background: rgba(33, 79, 129, 0.55);
-    border-color: rgba(74, 163, 255, 0.55);
-    box-shadow: 0 0 0 1px rgba(74, 163, 255, 0.35);
-  `}
 `;
 
 // ─── Brush controls ───────────────────────────────────────────────────────────
 
 export const BrushLabel = styled.label`
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: rgba(230, 240, 255, 0.85);
+  gap: 6px;
+  color: rgba(230, 240, 255, 0.5);
+  white-space: nowrap;
 `;
 
 export const BrushValue = styled.span`
-  color: #8ab7e5;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  color: rgba(230, 240, 255, 0.9);
+  font-weight: 700;
+  font-size: 0.82rem;
+  min-width: 1.6ch;
 `;
 
 export const BrushRange = styled.input`
-  width: min(220px, 100%);
-  accent-color: #214f81;
+  width: min(160px, 100%);
+  accent-color: var(--accent);
+  cursor: pointer;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.35;
     cursor: not-allowed;
-  }
-
-  @media (max-width: 900px) {
-    width: 100%;
   }
 `;
 

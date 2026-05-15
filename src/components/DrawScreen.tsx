@@ -12,13 +12,12 @@ import {
   BrushGroup,
   BrushLabel,
   BrushRange,
-  BrushValue,
   CanvasLayer,
   CanvasWrap,
   ControlDivider,
-  ControlGroup,
   ControlInnerDivider,
   Controls,
+  ControlsRow,
   ColorDot,
   CustomColorLabel,
   DrawingCanvas,
@@ -30,6 +29,7 @@ import {
   Screen,
   TemplateButton,
   TemplatesGroup,
+  ToolGroup,
 } from "./DrawScreen.styles";
 
 type ColorOption = {
@@ -97,139 +97,86 @@ export const DrawScreen = ({
   frameCanvasRef,
 }: DrawScreenProps) => {
   const isFill = tool === "fill";
-  const sizeLabel = tool === "eraser" ? "지우개 크기" : "브러쉬 크기";
+  const sizeLabel = tool === "eraser" ? "지우개" : "브러쉬";
 
   return (
     <Screen>
       <Controls role="toolbar">
-        <ControlGroup>
-          <IconButton
-            type="button"
-            onClick={onUndo}
-            disabled={!canUndo}
-            aria-label="되돌리기"
-          >
-            <UndoIcon />
-          </IconButton>
-          <IconButton
-            type="button"
-            onClick={onRedo}
-            disabled={!canRedo}
-            aria-label="다시하기"
-          >
-            <RedoIcon />
-          </IconButton>
-          <ControlInnerDivider aria-hidden="true" />
-          <IconButton
-            type="button"
-            $active={tool === "pen"}
-            onClick={() => onToolChange("pen")}
-            aria-label="펜"
-          >
-            <PenIcon />
-          </IconButton>
-          <IconButton
-            type="button"
-            $active={tool === "eraser"}
-            onClick={() => onToolChange("eraser")}
-            aria-label="지우개"
-          >
-            <EraserIcon />
-          </IconButton>
-          <IconButton
-            type="button"
-            $active={tool === "fill"}
-            onClick={() => onToolChange("fill")}
-            aria-label="채우기"
-          >
-            <FillIcon />
-          </IconButton>
-        </ControlGroup>
 
-        <ControlDivider aria-hidden="true" />
-
-        <PaletteGroup>
-          {colors.map((swatch) => (
-            <ColorDot
-              key={swatch.value}
+        {/* 첫 번째 줄: 도구 + 팔레트 + 완료 */}
+        <ControlsRow>
+          <ToolGroup>
+            <IconButton
               type="button"
-              $active={color === swatch.value}
-              style={{ backgroundColor: swatch.value }}
-              onClick={() => onColorChange(swatch.value)}
-              aria-label={`색상 ${swatch.name}`}
-            />
-          ))}
-          <CustomColorLabel
-            $active={color === customColor}
-            style={{ backgroundColor: customColor }}
-            aria-label="커스텀 색상 선택"
-          >
-            <input
-              type="color"
-              value={customColor}
-              onChange={(event) => onCustomColorChange(event.target.value)}
+              onClick={onUndo}
+              disabled={!canUndo}
+              aria-label="되돌리기"
+            >
+              <UndoIcon />
+            </IconButton>
+            <IconButton
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              aria-label="다시하기"
+            >
+              <RedoIcon />
+            </IconButton>
+            <ControlInnerDivider aria-hidden="true" />
+            <IconButton
+              type="button"
+              $active={tool === "pen"}
+              onClick={() => onToolChange("pen")}
+              aria-label="펜"
+            >
+              <PenIcon />
+            </IconButton>
+            <IconButton
+              type="button"
+              $active={tool === "eraser"}
+              onClick={() => onToolChange("eraser")}
+              aria-label="지우개"
+            >
+              <EraserIcon />
+            </IconButton>
+            <IconButton
+              type="button"
+              $active={tool === "fill"}
+              onClick={() => onToolChange("fill")}
+              aria-label="채우기"
+            >
+              <FillIcon />
+            </IconButton>
+          </ToolGroup>
+
+          <ControlDivider aria-hidden="true" />
+
+          <PaletteGroup>
+            {colors.map((swatch) => (
+              <ColorDot
+                key={swatch.value}
+                type="button"
+                $active={color === swatch.value}
+                style={{ backgroundColor: swatch.value }}
+                onClick={() => onColorChange(swatch.value)}
+                aria-label={`색상 ${swatch.name}`}
+              />
+            ))}
+            <CustomColorLabel
+              $active={color === customColor}
               aria-label="커스텀 색상 선택"
-            />
-          </CustomColorLabel>
-        </PaletteGroup>
-
-        <ControlDivider aria-hidden="true" />
-
-        <BrushGroup>
-          <EraserModeGroup
-            $hidden={tool !== "eraser"}
-            role="group"
-            aria-label="지우개 방식 선택"
-            aria-hidden={tool !== "eraser"}
-          >
-            <ModeChip
-              type="button"
-              $active={eraserMode === "stroke"}
-              onClick={() => onEraserModeChange("stroke")}
-              tabIndex={tool === "eraser" ? 0 : -1}
             >
-              선으로 지우기
-            </ModeChip>
-            <ModeChip
-              type="button"
-              $active={eraserMode === "brush"}
-              onClick={() => onEraserModeChange("brush")}
-              tabIndex={tool === "eraser" ? 0 : -1}
-            >
-              브러쉬로 지우기
-            </ModeChip>
-          </EraserModeGroup>
-          <BrushLabel htmlFor="brush-size">
-            <span>{isFill ? "채우기" : sizeLabel}</span>
-            {!isFill && <BrushValue>{brushSize}</BrushValue>}
-          </BrushLabel>
-          <BrushRange
-            id="brush-size"
-            type="range"
-            min={brushMin}
-            max={brushMax}
-            step={1}
-            value={brushSize}
-            onChange={(event) => onBrushSizeChange(Number(event.target.value))}
-            aria-label={`${sizeLabel} 조절`}
-            disabled={isFill}
-          />
-        </BrushGroup>
+              <input
+                type="color"
+                value={customColor}
+                onChange={(event) => onCustomColorChange(event.target.value)}
+                aria-label="커스텀 색상 선택"
+              />
+            </CustomColorLabel>
+          </PaletteGroup>
 
-        <ControlDivider aria-hidden="true" />
+          <ControlDivider aria-hidden="true" />
 
-        <TemplatesGroup>
-          {templates.map((template) => (
-            <TemplateButton
-              key={template.id}
-              type="button"
-              $active={selectedTemplateId === template.id}
-              onClick={() => onSelectTemplate(template.id)}
-              aria-label={`물고기 템플릿 ${template.id}`}
-            >
-              {template.icon}
-            </TemplateButton>
-          ))}
           <IconButton
             type="button"
             $primary
@@ -238,7 +185,62 @@ export const DrawScreen = ({
           >
             <CheckIcon />
           </IconButton>
-        </TemplatesGroup>
+        </ControlsRow>
+
+        {/* 두 번째 줄: 브러쉬/지우개 설정 + 템플릿 */}
+        <ControlsRow>
+          <BrushGroup>
+            <BrushLabel htmlFor="brush-size">
+              {isFill ? "채우기" : sizeLabel}
+            </BrushLabel>
+            <BrushRange
+              id="brush-size"
+              type="range"
+              min={brushMin}
+              max={brushMax}
+              step={1}
+              value={brushSize}
+              onChange={(event) =>
+                onBrushSizeChange(Number(event.target.value))
+              }
+              aria-label={`${sizeLabel} 크기 조절`}
+              disabled={isFill}
+            />
+            {tool === "eraser" && (
+              <EraserModeGroup role="group" aria-label="지우개 방식 선택">
+                <ModeChip
+                  type="button"
+                  $active={eraserMode === "stroke"}
+                  onClick={() => onEraserModeChange("stroke")}
+                >
+                  선으로 지우기
+                </ModeChip>
+                <ModeChip
+                  type="button"
+                  $active={eraserMode === "brush"}
+                  onClick={() => onEraserModeChange("brush")}
+                >
+                  브러쉬로 지우기
+                </ModeChip>
+              </EraserModeGroup>
+            )}
+          </BrushGroup>
+
+          <TemplatesGroup>
+            {templates.map((template) => (
+              <TemplateButton
+                key={template.id}
+                type="button"
+                $active={selectedTemplateId === template.id}
+                onClick={() => onSelectTemplate(template.id)}
+                aria-label={`물고기 템플릿 ${template.id}`}
+              >
+                {template.icon}
+              </TemplateButton>
+            ))}
+          </TemplatesGroup>
+        </ControlsRow>
+
       </Controls>
 
       <CanvasWrap $error={drawError}>
