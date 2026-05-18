@@ -10,7 +10,7 @@ import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
 import { NameScreen } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
-import { FISH_TEMPLATES, type FishTemplate } from "./components/fishTemplates";
+import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
   BRUSH_MIN,
@@ -21,7 +21,7 @@ import {
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
-import "./App.css";
+import { AppWrapper, AppBubble } from "./App.styles";
 
 type Step = "draw" | "name" | "sent";
 type Point = {
@@ -39,6 +39,8 @@ type StrokeAction = {
 type FillAction = {
   type: "fill";
   color: string;
+  x: number;
+  y: number;
 };
 
 type EraseAction = {
@@ -79,13 +81,12 @@ function App() {
   const isDrawingRef = useRef(false);
   const isErasingRef = useRef(false);
   const hasDrawingRef = useRef(false);
-  const framePathRef = useRef<Path2D | null>(null);
+  const templateImageRef = useRef<HTMLImageElement | null>(null);
   const actionsRef = useRef<DrawAction[]>([]);
   const currentStrokeRef = useRef<StrokeAction | null>(null);
   const currentEraseRef = useRef<EraseAction | null>(null);
   const historyRef = useRef<DrawAction[][]>([[]]);
   const redoHistoryRef = useRef<DrawAction[][]>([]);
-  const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
   const socketRef = useRef<WebSocket | null>(null);
 
   const [step, setStep] = useState<Step>("draw");
@@ -111,17 +112,9 @@ function App() {
   const [canRedo, setCanRedo] = useState(false);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
 
-  const selectedTemplate =
-    FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
-    FISH_TEMPLATES[0];
-
   useEffect(() => {
     hasDrawingRef.current = hasDrawing;
   }, [hasDrawing]);
-
-  useEffect(() => {
-    selectedTemplateRef.current = selectedTemplate;
-  }, [selectedTemplate]);
 
   const cloneActions = (actions: DrawAction[]) =>
     actions.map((action) =>
@@ -133,27 +126,6 @@ function App() {
           },
     );
 
-  const getTemplateSize = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-  ) => {
-    const { bounds } = template;
-    const maxByWidth = width / bounds.width;
-    const maxByHeight = height / bounds.height;
-    return Math.min(maxByWidth, maxByHeight) * 0.8;
-  };
-
-  const buildTemplatePath = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-    size: number,
-  ) => {
-    const centerX = width / 2 + template.bounds.centerOffsetX * size;
-    return template.createPath(centerX, height / 2, size);
-  };
-
   const updateFrame = (width?: number, height?: number) => {
     const frameCanvas = frameCanvasRef.current;
     const frameCtx = frameContextRef.current;
@@ -162,30 +134,18 @@ function App() {
     const rect = drawCanvas.getBoundingClientRect();
     const frameWidth = width ?? rect.width;
     const frameHeight = height ?? rect.height;
-    const template = selectedTemplateRef.current;
-    const baseSize = getTemplateSize(template, frameWidth, frameHeight);
-    const fishHeight = baseSize * template.bounds.height;
-    const frameLine = Math.max(1.5, Math.min(3.5, fishHeight * 0.01));
-    const path = buildTemplatePath(template, frameWidth, frameHeight, baseSize);
-    const frameInset = frameLine * 2;
-    const frameSize = Math.max(0, baseSize - frameInset);
-    const framePath = buildTemplatePath(
-      template,
-      frameWidth,
-      frameHeight,
-      frameSize,
-    );
-    framePathRef.current = framePath;
+    const img = templateImageRef.current;
     frameCtx.clearRect(0, 0, frameWidth, frameHeight);
-    frameCtx.strokeStyle = "rgba(230, 240, 255, 0.75)";
-    frameCtx.lineWidth = frameLine;
-    frameCtx.lineJoin = "round";
-    frameCtx.lineCap = "round";
-    frameCtx.save();
-    frameCtx.stroke(path);
-    frameCtx.globalCompositeOperation = "destination-in";
-    frameCtx.fill(path);
-    frameCtx.restore();
+    if (!img?.complete || !img.naturalWidth) return;
+    const scale = Math.min(
+      (frameWidth * 0.85) / img.naturalWidth,
+      (frameHeight * 0.85) / img.naturalHeight,
+    );
+    const drawW = img.naturalWidth * scale;
+    const drawH = img.naturalHeight * scale;
+    const drawX = (frameWidth - drawW) / 2;
+    const drawY = (frameHeight - drawH) / 2;
+    frameCtx.drawImage(img, drawX, drawY, drawW, drawH);
   };
 
   const drawStroke = (
@@ -216,13 +176,82 @@ function App() {
   };
 
   const drawFill = (ctx: CanvasRenderingContext2D, fill: FillAction) => {
-    const fillPath = framePathRef.current;
-    if (!fillPath) return;
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = fill.color;
-    ctx.fill(fillPath);
-    ctx.restore();
+    const frameCtx = frameContextRef.current;
+    if (!frameCtx) return;
+
+    const { canvas } = ctx;
+    const w = canvas.width;
+    const h = canvas.height;
+    const n = w * h;
+
+    const framePixels = frameCtx.getImageData(0, 0, w, h).data;
+    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+
+    // Walls = fish outline (any frame pixel with alpha > 0) OR existing strokes/fills
+    const wall = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (framePixels[i * 4 + 3] > 0 || drawPixels[i * 4 + 3] > 10) wall[i] = 1;
+    }
+
+    // BFS from all canvas border pixels to mark every transparent region
+    // reachable from outside — these are "outside the fish outline"
+    const outside = new Uint8Array(n);
+    const q: number[] = [];
+
+    const seed = (p: number) => {
+      if (!wall[p] && !outside[p]) { outside[p] = 1; q.push(p); }
+    };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (let y = 1; y < h - 1; y++) { seed(y * w); seed(y * w + w - 1); }
+
+    for (let qi = 0; qi < q.length; qi++) {
+      const p = q[qi];
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0)     { const np = p - 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (x < w - 1) { const np = p + 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y > 0)     { const np = p - w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y < h - 1) { const np = p + w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+    }
+
+    // Click position in physical pixels (fill.x/y are relative 0–1 of CSS canvas)
+    const startX = Math.max(0, Math.min(w - 1, Math.round(fill.x * w)));
+    const startY = Math.max(0, Math.min(h - 1, Math.round(fill.y * h)));
+    const startP = startY * w + startX;
+
+    // Reject if clicked on the outline, an existing stroke, or outside the fish
+    if (wall[startP] || outside[startP]) return;
+
+    // DFS flood fill through the fish interior, bounded by walls and strokes
+    const filled = new Uint8Array(n);
+    const stack: number[] = [startP];
+    filled[startP] = 1;
+
+    while (stack.length > 0) {
+      const p = stack.pop()!;
+      const x = p % w, y = (p / w) | 0;
+      const check = (np: number) => {
+        if (!filled[np] && !wall[np] && !outside[np]) { filled[np] = 1; stack.push(np); }
+      };
+      if (x > 0)     check(p - 1);
+      if (x < w - 1) check(p + 1);
+      if (y > 0)     check(p - w);
+      if (y < h - 1) check(p + w);
+    }
+
+    // Parse #rrggbb
+    const r = parseInt(fill.color.slice(1, 3), 16);
+    const g = parseInt(fill.color.slice(3, 5), 16);
+    const b = parseInt(fill.color.slice(5, 7), 16);
+
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+    for (let i = 0; i < n; i++) {
+      if (filled[i]) {
+        const idx = i * 4;
+        data[idx] = r; data[idx + 1] = g; data[idx + 2] = b; data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
   };
 
   const drawErase = (
@@ -319,10 +348,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.requestAnimationFrame(() => {
-      updateFrame();
-      redrawCanvas(actionsRef.current);
-    });
+    const template =
+      FISH_TEMPLATES.find((t) => t.id === selectedTemplateId) ??
+      FISH_TEMPLATES[0];
+    const img = new Image();
+    img.onload = () => {
+      templateImageRef.current = img;
+      window.requestAnimationFrame(() => {
+        updateFrame();
+        redrawCanvas(actionsRef.current);
+      });
+    };
+    img.src = template.imageUrl;
   }, [selectedTemplateId]);
 
   const getPoint = (event: PointerEvent<HTMLCanvasElement>) => {
@@ -392,9 +429,7 @@ function App() {
     for (let index = 1; index < scaledPoints.length; index += 1) {
       const segmentStart = scaledPoints[index - 1];
       const segmentEnd = scaledPoints[index];
-      if (
-        getDistanceToSegment(point, segmentStart, segmentEnd) <= threshold
-      ) {
+      if (getDistanceToSegment(point, segmentStart, segmentEnd) <= threshold) {
         return true;
       }
     }
@@ -435,18 +470,35 @@ function App() {
     window.setTimeout(() => setter(false), 600);
   };
 
-  const handleFill = () => {
-    commitActions([...actionsRef.current, { type: "fill", color }]);
+  const handleFill = (rx: number, ry: number) => {
+    commitActions([
+      ...actionsRef.current,
+      { type: "fill", color, x: rx, y: ry },
+    ]);
   };
 
   const findActionIndexAtPoint = (x: number, y: number) => {
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
-    const fillPath = framePathRef.current;
+    const frameCtx = frameContextRef.current;
     if (!canvas || !ctx) return -1;
     const { width, height } = canvas.getBoundingClientRect();
     let lastFillIndex = -1;
-    const isInsideFillShape = fillPath ? ctx.isPointInPath(fillPath, x, y) : false;
+    const isInsideFillShape = (() => {
+      if (!frameCtx) return false;
+      const ratio = window.devicePixelRatio || 1;
+      try {
+        const pixel = frameCtx.getImageData(
+          Math.round(x * ratio),
+          Math.round(y * ratio),
+          1,
+          1,
+        );
+        return pixel.data[3] > 10;
+      } catch {
+        return false;
+      }
+    })();
 
     for (let index = actionsRef.current.length - 1; index >= 0; index -= 1) {
       const action = actionsRef.current[index];
@@ -461,10 +513,7 @@ function App() {
         continue;
       }
 
-      const hitThreshold = Math.max(
-        action.size * 0.5 + 6,
-        eraserSize * 0.7,
-      );
+      const hitThreshold = Math.max(action.size * 0.5 + 6, eraserSize * 0.7);
       if (isPointNearStroke({ x, y }, action, width, height, hitThreshold)) {
         return index;
       }
@@ -489,7 +538,8 @@ function App() {
   const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     if (step !== "draw") return;
     if (tool === "fill") {
-      handleFill();
+      const { x: rx, y: ry } = getRelativePoint(event);
+      handleFill(rx, ry);
       return;
     }
     if (tool === "eraser") {
@@ -724,11 +774,11 @@ function App() {
             name: trimmedName,
             message: trimmedMessage,
           },
-        })
+        }),
       );
 
       setStep("sent");
-    } catch (error) {
+    } catch {
       setSubmitError(true);
     } finally {
       setIsSubmitting(false);
@@ -736,11 +786,10 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <AppWrapper>
       {bubbles.map((bubble) => (
-        <div
+        <AppBubble
           key={bubble.id}
-          className="app-bubble"
           style={
             {
               left: `${bubble.left}%`,
@@ -814,7 +863,7 @@ function App() {
       )}
 
       {step === "sent" && <SentScreen />}
-    </div>
+    </AppWrapper>
   );
 }
 
