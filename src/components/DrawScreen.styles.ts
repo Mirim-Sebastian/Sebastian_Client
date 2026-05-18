@@ -270,12 +270,12 @@ const BaseCanvas = styled.canvas`
   inset: 0;
 `;
 
-export const DrawingCanvas = styled(BaseCanvas)<{ $fillMode: boolean }>`
+export const DrawingCanvas = styled(BaseCanvas)`
   background: transparent;
-  z-index: ${({ $fillMode }) => ($fillMode ? 1 : 2)};
+  z-index: 1;
 `;
 
-export const FrameCanvas = styled(BaseCanvas)<{ $fillMode: boolean }>`
+export const FrameCanvas = styled(BaseCanvas)`
   pointer-events: none;
-  z-index: ${({ $fillMode }) => ($fillMode ? 2 : 1)};
+  z-index: 2;
 `;

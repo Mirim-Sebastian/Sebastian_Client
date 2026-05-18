@@ -39,6 +39,8 @@ type StrokeAction = {
 type FillAction = {
   type: "fill";
   color: string;
+  x: number;
+  y: number;
 };
 
 type EraseAction = {
@@ -174,22 +176,82 @@ function App() {
   };
 
   const drawFill = (ctx: CanvasRenderingContext2D, fill: FillAction) => {
-    const frameCanvas = frameCanvasRef.current;
-    if (!frameCanvas) return;
-    const tmpCanvas = document.createElement("canvas");
-    tmpCanvas.width = ctx.canvas.width;
-    tmpCanvas.height = ctx.canvas.height;
-    const tmpCtx = tmpCanvas.getContext("2d");
-    if (!tmpCtx) return;
-    tmpCtx.fillStyle = fill.color;
-    tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
-    tmpCtx.globalCompositeOperation = "destination-in";
-    tmpCtx.drawImage(frameCanvas, 0, 0);
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalCompositeOperation = "source-over";
-    ctx.drawImage(tmpCanvas, 0, 0);
-    ctx.restore();
+    const frameCtx = frameContextRef.current;
+    if (!frameCtx) return;
+
+    const { canvas } = ctx;
+    const w = canvas.width;
+    const h = canvas.height;
+    const n = w * h;
+
+    const framePixels = frameCtx.getImageData(0, 0, w, h).data;
+    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+
+    // Walls = fish outline (any frame pixel with alpha > 0) OR existing strokes/fills
+    const wall = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (framePixels[i * 4 + 3] > 0 || drawPixels[i * 4 + 3] > 10) wall[i] = 1;
+    }
+
+    // BFS from all canvas border pixels to mark every transparent region
+    // reachable from outside — these are "outside the fish outline"
+    const outside = new Uint8Array(n);
+    const q: number[] = [];
+
+    const seed = (p: number) => {
+      if (!wall[p] && !outside[p]) { outside[p] = 1; q.push(p); }
+    };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (let y = 1; y < h - 1; y++) { seed(y * w); seed(y * w + w - 1); }
+
+    for (let qi = 0; qi < q.length; qi++) {
+      const p = q[qi];
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0)     { const np = p - 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (x < w - 1) { const np = p + 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y > 0)     { const np = p - w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y < h - 1) { const np = p + w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+    }
+
+    // Click position in physical pixels (fill.x/y are relative 0–1 of CSS canvas)
+    const startX = Math.max(0, Math.min(w - 1, Math.round(fill.x * w)));
+    const startY = Math.max(0, Math.min(h - 1, Math.round(fill.y * h)));
+    const startP = startY * w + startX;
+
+    // Reject if clicked on the outline, an existing stroke, or outside the fish
+    if (wall[startP] || outside[startP]) return;
+
+    // DFS flood fill through the fish interior, bounded by walls and strokes
+    const filled = new Uint8Array(n);
+    const stack: number[] = [startP];
+    filled[startP] = 1;
+
+    while (stack.length > 0) {
+      const p = stack.pop()!;
+      const x = p % w, y = (p / w) | 0;
+      const check = (np: number) => {
+        if (!filled[np] && !wall[np] && !outside[np]) { filled[np] = 1; stack.push(np); }
+      };
+      if (x > 0)     check(p - 1);
+      if (x < w - 1) check(p + 1);
+      if (y > 0)     check(p - w);
+      if (y < h - 1) check(p + w);
+    }
+
+    // Parse #rrggbb
+    const r = parseInt(fill.color.slice(1, 3), 16);
+    const g = parseInt(fill.color.slice(3, 5), 16);
+    const b = parseInt(fill.color.slice(5, 7), 16);
+
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+    for (let i = 0; i < n; i++) {
+      if (filled[i]) {
+        const idx = i * 4;
+        data[idx] = r; data[idx + 1] = g; data[idx + 2] = b; data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
   };
 
   const drawErase = (
@@ -367,9 +429,7 @@ function App() {
     for (let index = 1; index < scaledPoints.length; index += 1) {
       const segmentStart = scaledPoints[index - 1];
       const segmentEnd = scaledPoints[index];
-      if (
-        getDistanceToSegment(point, segmentStart, segmentEnd) <= threshold
-      ) {
+      if (getDistanceToSegment(point, segmentStart, segmentEnd) <= threshold) {
         return true;
       }
     }
@@ -410,8 +470,11 @@ function App() {
     window.setTimeout(() => setter(false), 600);
   };
 
-  const handleFill = () => {
-    commitActions([...actionsRef.current, { type: "fill", color }]);
+  const handleFill = (rx: number, ry: number) => {
+    commitActions([
+      ...actionsRef.current,
+      { type: "fill", color, x: rx, y: ry },
+    ]);
   };
 
   const findActionIndexAtPoint = (x: number, y: number) => {
@@ -450,10 +513,7 @@ function App() {
         continue;
       }
 
-      const hitThreshold = Math.max(
-        action.size * 0.5 + 6,
-        eraserSize * 0.7,
-      );
+      const hitThreshold = Math.max(action.size * 0.5 + 6, eraserSize * 0.7);
       if (isPointNearStroke({ x, y }, action, width, height, hitThreshold)) {
         return index;
       }
@@ -478,7 +538,8 @@ function App() {
   const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     if (step !== "draw") return;
     if (tool === "fill") {
-      handleFill();
+      const { x: rx, y: ry } = getRelativePoint(event);
+      handleFill(rx, ry);
       return;
     }
     if (tool === "eraser") {
@@ -713,7 +774,7 @@ function App() {
             name: trimmedName,
             message: trimmedMessage,
           },
-        })
+        }),
       );
 
       setStep("sent");

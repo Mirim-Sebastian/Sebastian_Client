@@ -247,7 +247,6 @@ export const DrawScreen = ({
         <CanvasLayer>
           <DrawingCanvas
             ref={drawCanvasRef}
-            $fillMode={isFill}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -256,7 +255,6 @@ export const DrawScreen = ({
           />
           <FrameCanvas
             ref={frameCanvasRef}
-            $fillMode={isFill}
             aria-hidden="true"
           />
         </CanvasLayer>
