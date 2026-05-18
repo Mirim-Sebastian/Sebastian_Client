@@ -63,6 +63,13 @@ export const IconButton = styled.button<{
     display: block;
   }
 
+  .tool-icon-img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    filter: brightness(0) invert(1);
+  }
+
   .spinner {
     animation: ${spin} 1s linear infinite;
   }
@@ -84,6 +91,7 @@ export const IconButton = styled.button<{
     background: var(--ink);
     color: var(--bg);
     border-color: transparent;
+    .tool-icon-img { filter: brightness(0); }
   `}
 
   ${({ $primary }) =>

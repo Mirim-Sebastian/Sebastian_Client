@@ -10,7 +10,7 @@ import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
 import { NameScreen } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
-import { FISH_TEMPLATES, type FishTemplate } from "./components/fishTemplates";
+import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
   BRUSH_MIN,
@@ -79,13 +79,12 @@ function App() {
   const isDrawingRef = useRef(false);
   const isErasingRef = useRef(false);
   const hasDrawingRef = useRef(false);
-  const framePathRef = useRef<Path2D | null>(null);
+  const templateImageRef = useRef<HTMLImageElement | null>(null);
   const actionsRef = useRef<DrawAction[]>([]);
   const currentStrokeRef = useRef<StrokeAction | null>(null);
   const currentEraseRef = useRef<EraseAction | null>(null);
   const historyRef = useRef<DrawAction[][]>([[]]);
   const redoHistoryRef = useRef<DrawAction[][]>([]);
-  const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
   const socketRef = useRef<WebSocket | null>(null);
 
   const [step, setStep] = useState<Step>("draw");
@@ -111,17 +110,9 @@ function App() {
   const [canRedo, setCanRedo] = useState(false);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
 
-  const selectedTemplate =
-    FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
-    FISH_TEMPLATES[0];
-
   useEffect(() => {
     hasDrawingRef.current = hasDrawing;
   }, [hasDrawing]);
-
-  useEffect(() => {
-    selectedTemplateRef.current = selectedTemplate;
-  }, [selectedTemplate]);
 
   const cloneActions = (actions: DrawAction[]) =>
     actions.map((action) =>
@@ -133,27 +124,6 @@ function App() {
           },
     );
 
-  const getTemplateSize = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-  ) => {
-    const { bounds } = template;
-    const maxByWidth = width / bounds.width;
-    const maxByHeight = height / bounds.height;
-    return Math.min(maxByWidth, maxByHeight) * 0.8;
-  };
-
-  const buildTemplatePath = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-    size: number,
-  ) => {
-    const centerX = width / 2 + template.bounds.centerOffsetX * size;
-    return template.createPath(centerX, height / 2, size);
-  };
-
   const updateFrame = (width?: number, height?: number) => {
     const frameCanvas = frameCanvasRef.current;
     const frameCtx = frameContextRef.current;
@@ -162,30 +132,18 @@ function App() {
     const rect = drawCanvas.getBoundingClientRect();
     const frameWidth = width ?? rect.width;
     const frameHeight = height ?? rect.height;
-    const template = selectedTemplateRef.current;
-    const baseSize = getTemplateSize(template, frameWidth, frameHeight);
-    const fishHeight = baseSize * template.bounds.height;
-    const frameLine = Math.max(1.5, Math.min(3.5, fishHeight * 0.01));
-    const path = buildTemplatePath(template, frameWidth, frameHeight, baseSize);
-    const frameInset = frameLine * 2;
-    const frameSize = Math.max(0, baseSize - frameInset);
-    const framePath = buildTemplatePath(
-      template,
-      frameWidth,
-      frameHeight,
-      frameSize,
-    );
-    framePathRef.current = framePath;
+    const img = templateImageRef.current;
     frameCtx.clearRect(0, 0, frameWidth, frameHeight);
-    frameCtx.strokeStyle = "rgba(230, 240, 255, 0.75)";
-    frameCtx.lineWidth = frameLine;
-    frameCtx.lineJoin = "round";
-    frameCtx.lineCap = "round";
-    frameCtx.save();
-    frameCtx.stroke(path);
-    frameCtx.globalCompositeOperation = "destination-in";
-    frameCtx.fill(path);
-    frameCtx.restore();
+    if (!img?.complete || !img.naturalWidth) return;
+    const scale = Math.min(
+      (frameWidth * 0.85) / img.naturalWidth,
+      (frameHeight * 0.85) / img.naturalHeight,
+    );
+    const drawW = img.naturalWidth * scale;
+    const drawH = img.naturalHeight * scale;
+    const drawX = (frameWidth - drawW) / 2;
+    const drawY = (frameHeight - drawH) / 2;
+    frameCtx.drawImage(img, drawX, drawY, drawW, drawH);
   };
 
   const drawStroke = (
@@ -216,12 +174,21 @@ function App() {
   };
 
   const drawFill = (ctx: CanvasRenderingContext2D, fill: FillAction) => {
-    const fillPath = framePathRef.current;
-    if (!fillPath) return;
+    const frameCanvas = frameCanvasRef.current;
+    if (!frameCanvas) return;
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = ctx.canvas.width;
+    tmpCanvas.height = ctx.canvas.height;
+    const tmpCtx = tmpCanvas.getContext("2d");
+    if (!tmpCtx) return;
+    tmpCtx.fillStyle = fill.color;
+    tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+    tmpCtx.globalCompositeOperation = "destination-in";
+    tmpCtx.drawImage(frameCanvas, 0, 0);
     ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = fill.color;
-    ctx.fill(fillPath);
+    ctx.drawImage(tmpCanvas, 0, 0);
     ctx.restore();
   };
 
@@ -319,10 +286,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.requestAnimationFrame(() => {
-      updateFrame();
-      redrawCanvas(actionsRef.current);
-    });
+    const template =
+      FISH_TEMPLATES.find((t) => t.id === selectedTemplateId) ??
+      FISH_TEMPLATES[0];
+    const img = new Image();
+    img.onload = () => {
+      templateImageRef.current = img;
+      window.requestAnimationFrame(() => {
+        updateFrame();
+        redrawCanvas(actionsRef.current);
+      });
+    };
+    img.src = template.imageUrl;
   }, [selectedTemplateId]);
 
   const getPoint = (event: PointerEvent<HTMLCanvasElement>) => {
@@ -442,11 +417,25 @@ function App() {
   const findActionIndexAtPoint = (x: number, y: number) => {
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
-    const fillPath = framePathRef.current;
+    const frameCtx = frameContextRef.current;
     if (!canvas || !ctx) return -1;
     const { width, height } = canvas.getBoundingClientRect();
     let lastFillIndex = -1;
-    const isInsideFillShape = fillPath ? ctx.isPointInPath(fillPath, x, y) : false;
+    const isInsideFillShape = (() => {
+      if (!frameCtx) return false;
+      const ratio = window.devicePixelRatio || 1;
+      try {
+        const pixel = frameCtx.getImageData(
+          Math.round(x * ratio),
+          Math.round(y * ratio),
+          1,
+          1,
+        );
+        return pixel.data[3] > 10;
+      } catch {
+        return false;
+      }
+    })();
 
     for (let index = actionsRef.current.length - 1; index >= 0; index -= 1) {
       const action = actionsRef.current[index];
@@ -728,7 +717,7 @@ function App() {
       );
 
       setStep("sent");
-    } catch (error) {
+    } catch {
       setSubmitError(true);
     } finally {
       setIsSubmitting(false);

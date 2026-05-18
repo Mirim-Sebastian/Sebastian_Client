@@ -187,18 +187,19 @@ export const TemplateButton = styled.button<{ $active: boolean }>`
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 
-  svg {
+  img {
     width: 38px;
     height: 22px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
+    object-fit: contain;
+    filter: ${({ $active }) =>
+      $active ? "brightness(0) invert(0.9)" : "brightness(0) invert(0.5)"};
+    transition: filter 0.15s;
   }
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.22);
-    color: var(--ink);
+    img { filter: brightness(0) invert(0.85); }
   }
 `;
 
