@@ -152,7 +152,7 @@ export default function OceanScreen() {
             left: `${fish.x}%`,
             top: `${fish.y}%`,
             width: `${fish.scale}px`,
-            "--fish-direction": fish.direction,
+            "--fish-direction": -fish.direction,
           } as CSSProperties}
         >
           {activeFishId === fish.id && (
