@@ -76,8 +76,10 @@ function generateBubbles(): Bubble[] {
 function App() {
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const strokesCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const frameContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const strokesContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawingRef = useRef(false);
   const isErasingRef = useRef(false);
   const hasDrawingRef = useRef(false);
@@ -177,7 +179,8 @@ function App() {
 
   const drawFill = (ctx: CanvasRenderingContext2D, fill: FillAction) => {
     const frameCtx = frameContextRef.current;
-    if (!frameCtx) return;
+    const strokesCtx = strokesContextRef.current;
+    if (!frameCtx || !strokesCtx) return;
 
     const { canvas } = ctx;
     const w = canvas.width;
@@ -185,12 +188,13 @@ function App() {
     const n = w * h;
 
     const framePixels = frameCtx.getImageData(0, 0, w, h).data;
-    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+    // Use strokes-only canvas so previous fills don't block subsequent fills
+    const strokesPixels = strokesCtx.getImageData(0, 0, w, h).data;
 
-    // Walls = fish outline (any frame pixel with alpha > 0) OR existing strokes/fills
+    // Walls = fish outline OR user strokes (fills are intentionally excluded)
     const wall = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
-      if (framePixels[i * 4 + 3] > 0 || drawPixels[i * 4 + 3] > 10) wall[i] = 1;
+      if (framePixels[i * 4 + 3] > 0 || strokesPixels[i * 4 + 3] > 10) wall[i] = 1;
     }
 
     // BFS from all canvas border pixels to mark every transparent region
@@ -283,16 +287,20 @@ function App() {
   const redrawCanvas = (actions: DrawAction[]) => {
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
+    const strokesCtx = strokesContextRef.current;
     if (!canvas || !ctx) return;
     const { width, height } = canvas.getBoundingClientRect();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokesCtx?.clearRect(0, 0, canvas.width, canvas.height);
     actions.forEach((action) => {
       if (action.type === "fill") {
         drawFill(ctx, action);
       } else if (action.type === "erase") {
         drawErase(ctx, action, width, height);
+        if (strokesCtx) drawErase(strokesCtx, action, width, height);
       } else {
         drawStroke(ctx, action, width, height);
+        if (strokesCtx) drawStroke(strokesCtx, action, width, height);
       }
     });
   };
@@ -322,6 +330,14 @@ function App() {
     contextRef.current = drawCtx;
     frameContextRef.current = frameCtx;
 
+    // Off-screen canvas that holds only strokes/erases (no fills)
+    // Used so fills don't block subsequent fills in the same region
+    const strokesCanvas = document.createElement("canvas");
+    const strokesCtx = strokesCanvas.getContext("2d");
+    if (!strokesCtx) return;
+    strokesCanvasRef.current = strokesCanvas;
+    strokesContextRef.current = strokesCtx;
+
     const resizeCanvas = () => {
       const { width, height } = drawCanvas.getBoundingClientRect();
       if (!width || !height) return;
@@ -330,8 +346,11 @@ function App() {
       drawCanvas.height = Math.round(height * ratio);
       frameCanvas.width = Math.round(width * ratio);
       frameCanvas.height = Math.round(height * ratio);
+      strokesCanvas.width = Math.round(width * ratio);
+      strokesCanvas.height = Math.round(height * ratio);
       drawCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       frameCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      strokesCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       drawCtx.lineCap = "round";
       drawCtx.lineJoin = "round";
       updateFrame(width, height);
