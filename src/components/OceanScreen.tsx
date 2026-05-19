@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-import { getFishes } from "../api/fish";
+import { deleteFish, getFishes } from "../api/fish";
 import sharkImg from "../assets/images/shark.png";
 import eatSharkImg from "../assets/images/eat_shark.png";
 import {
@@ -15,6 +15,7 @@ import {
 
 interface Fish {
   id: number;
+  dbId: string | null;
   name: string;
   image: string;
   message: string;
@@ -72,11 +73,12 @@ function generateBubbles(): Bubble[] {
 }
 
 function makeFish(
-  data: { name: string; image: string; message: string; size?: string },
+  data: { name: string; image: string; message: string; size?: string; _id?: string; id?: string },
   id: number,
 ): Fish {
   return {
     id,
+    dbId: data._id ?? (typeof data.id === "string" ? data.id : null),
     name: data.name,
     image: data.image,
     message: typeof data.message === "string" ? data.message.trim() : "",
@@ -180,6 +182,15 @@ export default function OceanScreen() {
             const dist = Math.hypot(dx, dy);
             mouthOpen = dist < SHARK_MOUTH_DIST;
             if (dist < SHARK_EAT_DIST) {
+              const eaten = newFish.find((f) => f.id === targetId);
+              console.log("[shark] eating:", eaten?.name, "| dbId:", eaten?.dbId);
+              if (eaten?.dbId) {
+                deleteFish(eaten.dbId)
+                  .then(() => console.log("[deleteFish] OK:", eaten.dbId))
+                  .catch((e) => console.error("[deleteFish] FAIL:", e));
+              } else {
+                console.warn("[shark] no dbId", eaten);
+              }
               newFish = newFish.filter((f) => f.id !== targetId);
               phase = "exit";
               targetId = null;

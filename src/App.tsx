@@ -837,6 +837,7 @@ function App() {
         name: trimmedName,
         image: draftImage,
         message: trimmedMessage,
+        size: fishSize,
       });
 
       socketRef.current?.send(
