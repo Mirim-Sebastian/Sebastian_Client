@@ -27,6 +27,7 @@ interface Fish {
   wavePhase: number;
   waveSpeed: number;
   scale: number;
+  entering: boolean;
 }
 
 interface Shark {
@@ -75,33 +76,40 @@ function generateBubbles(): Bubble[] {
 function makeFish(
   data: { name: string; image: string; message: string; size?: string; _id?: string; id?: string },
   id: number,
+  isNew = false,
 ): Fish {
+  const fromRight = Math.random() < 0.5;
   return {
     id,
     dbId: data._id ?? (typeof data.id === "string" ? data.id : null),
     name: data.name,
     image: data.image,
     message: typeof data.message === "string" ? data.message.trim() : "",
-    x: 5 + Math.random() * 80,
+    x: isNew ? (fromRight ? 104 : -22) : 5 + Math.random() * 80,
     y: 10 + Math.random() * 70,
     speed: 0.08 + Math.random() * 0.12,
-    direction: Math.random() < 0.5 ? 1 : -1,
+    direction: isNew ? (fromRight ? -1 : 1) : (Math.random() < 0.5 ? 1 : -1),
     verticalVelocity: (Math.random() - 0.5) * 0.08,
     wavePhase: Math.random() * Math.PI * 2,
     waveSpeed: 0.05 + Math.random() * 0.08,
     scale: FISH_SIZE_MAP[data.size ?? "medium"] ?? 250,
+    entering: isNew,
   };
 }
 
 function moveFish(fish: Fish): Fish {
   let newDirection = fish.direction;
-  let newX = fish.x + fish.speed * newDirection;
+  const speed = fish.entering ? 0.55 : fish.speed;
+  let newX = fish.x + speed * newDirection;
   let newVerticalVelocity = fish.verticalVelocity;
   let newWaveSpeed = fish.waveSpeed;
   const newWavePhase = fish.wavePhase + fish.waveSpeed;
 
-  if (newX > 92) { newX = 92; newDirection = -1; }
-  if (newX < 2)  { newX = 2;  newDirection = 1;  }
+  const entering = fish.entering && (newX < 2 || newX > 92);
+  if (!entering) {
+    if (newX > 92) { newX = 92; newDirection = -1; }
+    if (newX < 2)  { newX = 2;  newDirection = 1;  }
+  }
 
   if (Math.random() < 0.018) {
     newVerticalVelocity = (Math.random() - 0.5) * 0.12;
@@ -124,6 +132,7 @@ function moveFish(fish: Fish): Fish {
     verticalVelocity: newVerticalVelocity,
     wavePhase: newWavePhase,
     waveSpeed: newWaveSpeed,
+    entering,
   };
 }
 
@@ -131,7 +140,6 @@ export default function OceanScreen() {
   const socketRef = useRef<WebSocket | null>(null);
   const fishListRef = useRef<Fish[]>([]);
   const sharkRef = useRef<Shark | null>(null);
-  const nextThresholdRef = useRef(10);
 
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [shark, setShark] = useState<Shark | null>(null);
@@ -144,25 +152,38 @@ export default function OceanScreen() {
         const loaded = fishes.map((f, i) => makeFish(f, i));
         fishListRef.current = loaded;
         setFishList(loaded);
-        // 다음 임계값을 현재 수의 다음 10단위로 설정
-        if (loaded.length > 0) {
-          nextThresholdRef.current = Math.floor(loaded.length / 10) * 10 + 10;
-        }
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-    socketRef.current = new WebSocket("ws://localhost:8000");
-    socketRef.current.onopen = () => console.log("Ocean connected");
-    socketRef.current.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      const fish = msg.data ?? msg;
-      const newFish = makeFish(fish, Date.now());
-      fishListRef.current = [...fishListRef.current, newFish];
-      setFishList([...fishListRef.current]);
+    let unmounted = false;
+
+    const connect = () => {
+      if (unmounted) return;
+      const ws = new WebSocket("ws://localhost:8000");
+      ws.onopen = () => console.log("[WS] Ocean connected");
+      ws.onerror = (e) => console.error("[WS] error", e);
+      ws.onclose = (e) => {
+        console.warn("[WS] closed", e.code);
+        if (!unmounted) setTimeout(connect, 2000);
+      };
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        const fish = msg.data ?? msg;
+        const newFish = makeFish(fish, Date.now(), true);
+        fishListRef.current = [...fishListRef.current, newFish];
+        setFishList([...fishListRef.current]);
+      };
+      socketRef.current = ws;
     };
-    return () => socketRef.current?.close();
+
+    connect();
+
+    return () => {
+      unmounted = true;
+      socketRef.current?.close();
+    };
   }, []);
 
   // 물고기 + 상어 애니메이션 루프
@@ -219,28 +240,6 @@ export default function OceanScreen() {
           sharkRef.current = updated;
           setShark(updated);
         }
-      }
-
-      // 상어 등장 조건 체크
-      if (
-        !sharkRef.current &&
-        newFish.length >= nextThresholdRef.current &&
-        newFish.length > 0
-      ) {
-        const target = newFish[Math.floor(Math.random() * newFish.length)];
-        const fromRight = Math.random() < 0.5;
-        const newShark: Shark = {
-          x: fromRight ? 130 : -30,
-          y: target.y,
-          targetId: target.id,
-          direction: fromRight ? -1 : 1,
-          exitDir: fromRight ? -1 : 1,
-          phase: "chase",
-          mouthOpen: false,
-        };
-        sharkRef.current = newShark;
-        setShark(newShark);
-        nextThresholdRef.current += 10;
       }
 
       fishListRef.current = newFish;

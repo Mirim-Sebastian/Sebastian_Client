@@ -12,17 +12,14 @@ export const SentScreen = ({ onDone }: SentScreenProps) => {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setCount((prev) => {
-        if (prev <= 1) {
-          window.clearInterval(interval);
-          onDone();
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCount((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [onDone]);
+  }, []);
+
+  useEffect(() => {
+    if (count === 0) onDone();
+  }, [count, onDone]);
 
   return (
     <Screen>

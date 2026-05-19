@@ -89,7 +89,7 @@ function App() {
   const currentEraseRef = useRef<EraseAction | null>(null);
   const historyRef = useRef<DrawAction[][]>([[]]);
   const redoHistoryRef = useRef<DrawAction[][]>([]);
-  const socketRef = useRef<WebSocket | null>(null);
+
 
   const [step, setStep] = useState<Step>("draw");
   const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
@@ -505,17 +505,6 @@ function App() {
     return false;
   };
 
-  useEffect(() => {
-    socketRef.current = new WebSocket("ws://localhost:8000");
-
-    socketRef.current.onopen = () => {
-      console.log("✅연결됨");
-    };
-
-    return () => {
-      socketRef.current?.close();
-    };
-  }, []);
 
   const applyTool = (ctx: CanvasRenderingContext2D) => {
     ctx.globalCompositeOperation = "source-over";
@@ -840,17 +829,6 @@ function App() {
         size: fishSize,
       });
 
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "NEW_FISH",
-          data: {
-            ...savedFish,
-            name: trimmedName,
-            message: trimmedMessage,
-            size: fishSize,
-          },
-        }),
-      );
 
       setStep("sent");
     } catch {
