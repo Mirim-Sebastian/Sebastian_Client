@@ -13,6 +13,29 @@ export const Screen = styled(BaseScreen)`
   gap: 20px;
 `;
 
+export const BackButton = styled.button`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 26, 50, 0.58);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(230, 240, 255, 0.8);
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(8, 26, 50, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+`;
+
 // ─── Fish preview ─────────────────────────────────────────────────────────────
 
 export const Preview = styled.div`

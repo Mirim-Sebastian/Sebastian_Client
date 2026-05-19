@@ -859,6 +859,22 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (step !== "sent") return;
+    const timer = window.setTimeout(() => {
+      setStep("draw");
+      setName("");
+      setMessage("");
+      setFishSize("medium");
+      setDraftImage(null);
+      resetDrawing();
+      setNameError(false);
+      setMessageError(false);
+      setSubmitError(false);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [step]);
+
   return (
     <AppWrapper>
       {bubbles.map((bubble) => (
@@ -879,7 +895,7 @@ function App() {
 
       {canvasHint && <AppToast>{canvasHint}</AppToast>}
 
-      {step === "draw" && (
+      <div style={{ display: step === "draw" ? undefined : "none" }}>
         <DrawScreen
           tool={tool}
           eraserMode={eraserMode}
@@ -922,7 +938,7 @@ function App() {
           drawCanvasRef={drawCanvasRef}
           frameCanvasRef={frameCanvasRef}
         />
-      )}
+      </div>
 
       {step === "name" && (
         <NameScreen
@@ -937,6 +953,7 @@ function App() {
           onNameChange={handleNameChange}
           onMessageChange={handleMessageChange}
           onFishSizeChange={setFishSize}
+          onBack={() => setStep("draw")}
           onSubmit={handleSubmit}
         />
       )}

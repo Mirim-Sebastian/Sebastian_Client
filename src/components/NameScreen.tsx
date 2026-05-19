@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
-import { CheckIcon, SpinnerIcon } from "./icons";
+import { BackIcon, CheckIcon, SpinnerIcon } from "./icons";
 import {
+  BackButton,
   FieldLabel,
   FormActions,
   FormCard,
@@ -33,6 +34,7 @@ type NameScreenProps = {
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   onFishSizeChange: (size: FishSize) => void;
+  onBack: () => void;
   onSubmit: () => void;
 };
 
@@ -48,9 +50,13 @@ export const NameScreen = ({
   onNameChange,
   onMessageChange,
   onFishSizeChange,
+  onBack,
   onSubmit,
 }: NameScreenProps) => (
   <Screen>
+    <BackButton type="button" onClick={onBack} aria-label="뒤로가기">
+      <BackIcon />
+    </BackButton>
     {draftImage && (
       <Preview>
         <img src={draftImage} alt="" />
