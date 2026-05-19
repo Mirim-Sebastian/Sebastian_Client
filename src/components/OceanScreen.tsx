@@ -1,4 +1,5 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { getFishes } from "../api/fish";
 import {
   FishImage,
   FishLabel,
@@ -51,11 +52,34 @@ function generateBubbles(): Bubble[] {
   }));
 }
 
+function makeFish(data: { name: string; image: string; message: string; size?: string }, id: number): Fish {
+  return {
+    id,
+    name: data.name,
+    image: data.image,
+    message: typeof data.message === "string" ? data.message.trim() : "",
+    x: 5 + Math.random() * 80,
+    y: 10 + Math.random() * 70,
+    speed: 0.08 + Math.random() * 0.12,
+    direction: Math.random() < 0.5 ? 1 : -1,
+    verticalVelocity: (Math.random() - 0.5) * 0.08,
+    wavePhase: Math.random() * Math.PI * 2,
+    waveSpeed: 0.05 + Math.random() * 0.08,
+    scale: FISH_SIZE_MAP[data.size ?? "medium"] ?? 200,
+  };
+}
+
 export default function OceanScreen() {
   const socketRef = useRef<WebSocket | null>(null);
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
   const [activeFishId, setActiveFishId] = useState<number | null>(null);
+
+  useEffect(() => {
+    getFishes().then((fishes) => {
+      setFishList(fishes.map((f, i) => makeFish(f, i)));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     socketRef.current = new WebSocket("ws://localhost:8000");
@@ -67,23 +91,7 @@ export default function OceanScreen() {
     socketRef.current.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       const fish = msg.data ?? msg;
-
-      const newFish: Fish = {
-        id: Date.now(),
-        name: fish.name,
-        image: fish.image,
-        message: typeof fish.message === "string" ? fish.message.trim() : "",
-        x: 5 + Math.random() * 80,
-        y: 10 + Math.random() * 70,
-        speed: 0.08 + Math.random() * 0.12,
-        direction: Math.random() < 0.5 ? 1 : -1,
-        verticalVelocity: (Math.random() - 0.5) * 0.08,
-        wavePhase: Math.random() * Math.PI * 2,
-        waveSpeed: 0.05 + Math.random() * 0.08,
-        scale: FISH_SIZE_MAP[fish.size] ?? 200,
-      };
-
-      setFishList((prev) => [...prev, newFish]);
+      setFishList((prev) => [...prev, makeFish(fish, Date.now())]);
     };
 
     return () => {

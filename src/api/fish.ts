@@ -2,6 +2,7 @@ export type FishPayload = {
   name: string
   image: string
   message: string
+  size: string
 }
 
 export type FishResponse = {
@@ -9,9 +10,16 @@ export type FishResponse = {
   name: string
   image: string
   message: string
+  size: string
 }
 
 const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
+
+export async function getFishes(): Promise<FishResponse[]> {
+  const response = await fetch(`${API_BASE}/fish`)
+  if (!response.ok) throw new Error(`GET /fish failed (${response.status})`)
+  return (await response.json()) as FishResponse[]
+}
 
 export async function postFish(payload: FishPayload): Promise<FishResponse> {
   const response = await fetch(`${API_BASE}/fish`, {
