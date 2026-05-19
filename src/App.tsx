@@ -21,7 +21,7 @@ import {
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
-import { AppWrapper, AppBubble } from "./App.styles";
+import { AppWrapper, AppBubble, AppToast } from "./App.styles";
 
 type Step = "draw" | "name" | "sent";
 type Point = {
@@ -104,6 +104,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawError, setDrawError] = useState(false);
+  const [canvasHint, setCanvasHint] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
   const [messageError, setMessageError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
@@ -258,6 +259,52 @@ function App() {
     ctx.putImageData(imageData, 0, 0);
   };
 
+  const checkFishCoverage = (): number => {
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    const frameCtx = frameContextRef.current;
+    if (!canvas || !ctx || !frameCtx) return 0;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const n = w * h;
+
+    const framePixels = frameCtx.getImageData(0, 0, w, h).data;
+    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+
+    const wall = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (framePixels[i * 4 + 3] > 0) wall[i] = 1;
+    }
+
+    const outside = new Uint8Array(n);
+    const q: number[] = [];
+    const seed = (p: number) => {
+      if (!wall[p] && !outside[p]) { outside[p] = 1; q.push(p); }
+    };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (let y = 1; y < h - 1; y++) { seed(y * w); seed(y * w + w - 1); }
+    for (let qi = 0; qi < q.length; qi++) {
+      const p = q[qi];
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0)     { const np = p - 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (x < w - 1) { const np = p + 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y > 0)     { const np = p - w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y < h - 1) { const np = p + w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+    }
+
+    let interior = 0;
+    let covered = 0;
+    for (let i = 0; i < n; i++) {
+      if (!wall[i] && !outside[i]) {
+        interior++;
+        if (drawPixels[i * 4 + 3] > 10) covered++;
+      }
+    }
+
+    return interior === 0 ? 0 : covered / interior;
+  };
+
   const drawErase = (
     ctx: CanvasRenderingContext2D,
     erase: EraseAction,
@@ -314,6 +361,7 @@ function App() {
   const commitActions = (actions: DrawAction[]) => {
     const nextActions = cloneActions(actions);
     setActions(nextActions);
+    setCanvasHint(null);
     historyRef.current.push(cloneActions(nextActions));
     redoHistoryRef.current = [];
     setCanUndo(historyRef.current.length > 1);
@@ -687,11 +735,20 @@ function App() {
   };
 
   const handleCompleteDrawing = () => {
-    console.log("🔥 hasDrawing:", hasDrawing);
-    if (!hasDrawing) {
+    const actions = actionsRef.current.length;
+    const coverage = checkFishCoverage();
+    console.log("[완료] actions:", actions, "coverage:", coverage.toFixed(3));
+    if (actions === 0) {
       flashError(setDrawError);
+      setCanvasHint("물고기를 그려주세요");
       return;
     }
+    if (coverage < 0.5) {
+      flashError(setDrawError);
+      setCanvasHint("그림틀의 50% 이상을 채워주세요");
+      return;
+    }
+    setCanvasHint(null);
     const image = exportImage();
     if (!image) {
       flashError(setDrawError);
@@ -763,13 +820,9 @@ function App() {
       return;
     }
 
-    if (!isNameValid) {
-      flashError(setNameError);
-      return;
-    }
-
-    if (!isMessageValid) {
-      flashError(setMessageError);
+    if (!isNameValid || !isMessageValid) {
+      if (!isNameValid) flashError(setNameError);
+      if (!isMessageValid) flashError(setMessageError);
       return;
     }
 
@@ -822,6 +875,8 @@ function App() {
         />
       ))}
 
+      {canvasHint && <AppToast>{canvasHint}</AppToast>}
+
       {step === "draw" && (
         <DrawScreen
           tool={tool}
@@ -834,6 +889,7 @@ function App() {
           canUndo={canUndo}
           canRedo={canRedo}
           drawError={drawError}
+
           brushSize={tool === "eraser" ? eraserSize : penSize}
           brushMin={BRUSH_MIN}
           brushMax={BRUSH_MAX}

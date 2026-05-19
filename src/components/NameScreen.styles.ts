@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { BaseScreen, shake } from "./ui.styles";
 
 export { IconButton } from "./ui.styles";
@@ -69,7 +69,7 @@ const InputField = styled.div<{ $error: boolean }>`
   border: 1px solid
     ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.14)")};
   transition: border-color 0.15s;
-  animation: ${({ $error }) => ($error ? `${shake} 0.35s ease` : "none")};
+  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
 
   &:focus-within {
     border-color: rgba(255, 255, 255, 0.3);

@@ -74,7 +74,7 @@ export default function OceanScreen() {
         verticalVelocity: (Math.random() - 0.5) * 0.08,
         wavePhase: Math.random() * Math.PI * 2,
         waveSpeed: 0.05 + Math.random() * 0.08,
-        scale: 140 + Math.random() * 30,
+        scale: 220 + Math.random() * 60,
       };
 
       setFishList((prev) => [...prev, newFish]);

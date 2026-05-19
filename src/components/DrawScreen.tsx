@@ -257,6 +257,7 @@ export const DrawScreen = ({
             ref={frameCanvasRef}
             aria-hidden="true"
           />
+
         </CanvasLayer>
       </CanvasWrap>
     </Screen>

@@ -52,7 +52,7 @@ export const NameScreen = ({
           placeholder="이름을 입력하세요"
           onChange={onNameChange}
           onKeyDown={(event) => {
-            if (event.key === "Enter") onSubmit();
+            if (event.key === "Enter" && !event.nativeEvent.isComposing) onSubmit();
           }}
           aria-label="물고기 이름"
           disabled={isSubmitting}
