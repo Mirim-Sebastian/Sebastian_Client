@@ -8,7 +8,7 @@ import {
 } from "react";
 import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
-import { NameScreen } from "./components/NameScreen";
+import { NameScreen, type FishSize } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
 import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
@@ -21,7 +21,7 @@ import {
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
-import { AppWrapper, AppBubble } from "./App.styles";
+import { AppWrapper, AppBubble, AppToast } from "./App.styles";
 
 type Step = "draw" | "name" | "sent";
 type Point = {
@@ -76,8 +76,10 @@ function generateBubbles(): Bubble[] {
 function App() {
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const strokesCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const frameContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const strokesContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawingRef = useRef(false);
   const isErasingRef = useRef(false);
   const hasDrawingRef = useRef(false);
@@ -87,7 +89,7 @@ function App() {
   const currentEraseRef = useRef<EraseAction | null>(null);
   const historyRef = useRef<DrawAction[][]>([[]]);
   const redoHistoryRef = useRef<DrawAction[][]>([]);
-  const socketRef = useRef<WebSocket | null>(null);
+
 
   const [step, setStep] = useState<Step>("draw");
   const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
@@ -100,8 +102,10 @@ function App() {
   const [draftImage, setDraftImage] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [fishSize, setFishSize] = useState<FishSize>("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawError, setDrawError] = useState(false);
+  const [canvasHint, setCanvasHint] = useState<string | null>(null);
   const [nameError, setNameError] = useState(false);
   const [messageError, setMessageError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
@@ -177,7 +181,8 @@ function App() {
 
   const drawFill = (ctx: CanvasRenderingContext2D, fill: FillAction) => {
     const frameCtx = frameContextRef.current;
-    if (!frameCtx) return;
+    const strokesCtx = strokesContextRef.current;
+    if (!frameCtx || !strokesCtx) return;
 
     const { canvas } = ctx;
     const w = canvas.width;
@@ -185,12 +190,13 @@ function App() {
     const n = w * h;
 
     const framePixels = frameCtx.getImageData(0, 0, w, h).data;
-    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+    // Use strokes-only canvas so previous fills don't block subsequent fills
+    const strokesPixels = strokesCtx.getImageData(0, 0, w, h).data;
 
-    // Walls = fish outline (any frame pixel with alpha > 0) OR existing strokes/fills
+    // Walls = fish outline OR user strokes (fills are intentionally excluded)
     const wall = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
-      if (framePixels[i * 4 + 3] > 0 || drawPixels[i * 4 + 3] > 10) wall[i] = 1;
+      if (framePixels[i * 4 + 3] > 0 || strokesPixels[i * 4 + 3] > 10) wall[i] = 1;
     }
 
     // BFS from all canvas border pixels to mark every transparent region
@@ -254,6 +260,52 @@ function App() {
     ctx.putImageData(imageData, 0, 0);
   };
 
+  const checkFishCoverage = (): number => {
+    const canvas = drawCanvasRef.current;
+    const ctx = contextRef.current;
+    const frameCtx = frameContextRef.current;
+    if (!canvas || !ctx || !frameCtx) return 0;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const n = w * h;
+
+    const framePixels = frameCtx.getImageData(0, 0, w, h).data;
+    const drawPixels = ctx.getImageData(0, 0, w, h).data;
+
+    const wall = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      if (framePixels[i * 4 + 3] > 0) wall[i] = 1;
+    }
+
+    const outside = new Uint8Array(n);
+    const q: number[] = [];
+    const seed = (p: number) => {
+      if (!wall[p] && !outside[p]) { outside[p] = 1; q.push(p); }
+    };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (let y = 1; y < h - 1; y++) { seed(y * w); seed(y * w + w - 1); }
+    for (let qi = 0; qi < q.length; qi++) {
+      const p = q[qi];
+      const x = p % w, y = (p / w) | 0;
+      if (x > 0)     { const np = p - 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (x < w - 1) { const np = p + 1; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y > 0)     { const np = p - w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+      if (y < h - 1) { const np = p + w; if (!wall[np] && !outside[np]) { outside[np] = 1; q.push(np); } }
+    }
+
+    let interior = 0;
+    let covered = 0;
+    for (let i = 0; i < n; i++) {
+      if (!wall[i] && !outside[i]) {
+        interior++;
+        if (drawPixels[i * 4 + 3] > 10) covered++;
+      }
+    }
+
+    return interior === 0 ? 0 : covered / interior;
+  };
+
   const drawErase = (
     ctx: CanvasRenderingContext2D,
     erase: EraseAction,
@@ -283,16 +335,20 @@ function App() {
   const redrawCanvas = (actions: DrawAction[]) => {
     const canvas = drawCanvasRef.current;
     const ctx = contextRef.current;
+    const strokesCtx = strokesContextRef.current;
     if (!canvas || !ctx) return;
     const { width, height } = canvas.getBoundingClientRect();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokesCtx?.clearRect(0, 0, canvas.width, canvas.height);
     actions.forEach((action) => {
       if (action.type === "fill") {
         drawFill(ctx, action);
       } else if (action.type === "erase") {
         drawErase(ctx, action, width, height);
+        if (strokesCtx) drawErase(strokesCtx, action, width, height);
       } else {
         drawStroke(ctx, action, width, height);
+        if (strokesCtx) drawStroke(strokesCtx, action, width, height);
       }
     });
   };
@@ -306,6 +362,7 @@ function App() {
   const commitActions = (actions: DrawAction[]) => {
     const nextActions = cloneActions(actions);
     setActions(nextActions);
+    setCanvasHint(null);
     historyRef.current.push(cloneActions(nextActions));
     redoHistoryRef.current = [];
     setCanUndo(historyRef.current.length > 1);
@@ -322,6 +379,14 @@ function App() {
     contextRef.current = drawCtx;
     frameContextRef.current = frameCtx;
 
+    // Off-screen canvas that holds only strokes/erases (no fills)
+    // Used so fills don't block subsequent fills in the same region
+    const strokesCanvas = document.createElement("canvas");
+    const strokesCtx = strokesCanvas.getContext("2d");
+    if (!strokesCtx) return;
+    strokesCanvasRef.current = strokesCanvas;
+    strokesContextRef.current = strokesCtx;
+
     const resizeCanvas = () => {
       const { width, height } = drawCanvas.getBoundingClientRect();
       if (!width || !height) return;
@@ -330,8 +395,11 @@ function App() {
       drawCanvas.height = Math.round(height * ratio);
       frameCanvas.width = Math.round(width * ratio);
       frameCanvas.height = Math.round(height * ratio);
+      strokesCanvas.width = Math.round(width * ratio);
+      strokesCanvas.height = Math.round(height * ratio);
       drawCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       frameCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      strokesCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       drawCtx.lineCap = "round";
       drawCtx.lineJoin = "round";
       updateFrame(width, height);
@@ -437,17 +505,6 @@ function App() {
     return false;
   };
 
-  useEffect(() => {
-    socketRef.current = new WebSocket("ws://localhost:8000");
-
-    socketRef.current.onopen = () => {
-      console.log("✅연결됨");
-    };
-
-    return () => {
-      socketRef.current?.close();
-    };
-  }, []);
 
   const applyTool = (ctx: CanvasRenderingContext2D) => {
     ctx.globalCompositeOperation = "source-over";
@@ -668,11 +725,20 @@ function App() {
   };
 
   const handleCompleteDrawing = () => {
-    console.log("🔥 hasDrawing:", hasDrawing);
-    if (!hasDrawing) {
+    const actions = actionsRef.current.length;
+    const coverage = checkFishCoverage();
+    console.log("[완료] actions:", actions, "coverage:", coverage.toFixed(3));
+    if (actions === 0) {
       flashError(setDrawError);
+      setCanvasHint("물고기를 그려주세요");
       return;
     }
+    if (coverage < 0.5) {
+      flashError(setDrawError);
+      setCanvasHint("그림틀의 50% 이상을 채워주세요");
+      return;
+    }
+    setCanvasHint(null);
     const image = exportImage();
     if (!image) {
       flashError(setDrawError);
@@ -744,13 +810,9 @@ function App() {
       return;
     }
 
-    if (!isNameValid) {
-      flashError(setNameError);
-      return;
-    }
-
-    if (!isMessageValid) {
-      flashError(setMessageError);
+    if (!isNameValid || !isMessageValid) {
+      if (!isNameValid) flashError(setNameError);
+      if (!isMessageValid) flashError(setMessageError);
       return;
     }
 
@@ -764,18 +826,9 @@ function App() {
         name: trimmedName,
         image: draftImage,
         message: trimmedMessage,
+        size: fishSize,
       });
 
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "NEW_FISH",
-          data: {
-            ...savedFish,
-            name: trimmedName,
-            message: trimmedMessage,
-          },
-        }),
-      );
 
       setStep("sent");
     } catch {
@@ -783,6 +836,18 @@ function App() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSentDone = () => {
+    setStep("draw");
+    setName("");
+    setMessage("");
+    setFishSize("medium");
+    setDraftImage(null);
+    resetDrawing();
+    setNameError(false);
+    setMessageError(false);
+    setSubmitError(false);
   };
 
   return (
@@ -803,7 +868,9 @@ function App() {
         />
       ))}
 
-      {step === "draw" && (
+      {canvasHint && <AppToast>{canvasHint}</AppToast>}
+
+      <div style={{ display: step === "draw" ? undefined : "none" }}>
         <DrawScreen
           tool={tool}
           eraserMode={eraserMode}
@@ -815,6 +882,7 @@ function App() {
           canUndo={canUndo}
           canRedo={canRedo}
           drawError={drawError}
+
           brushSize={tool === "eraser" ? eraserSize : penSize}
           brushMin={BRUSH_MIN}
           brushMax={BRUSH_MAX}
@@ -845,24 +913,27 @@ function App() {
           drawCanvasRef={drawCanvasRef}
           frameCanvasRef={frameCanvasRef}
         />
-      )}
+      </div>
 
       {step === "name" && (
         <NameScreen
           draftImage={draftImage}
           name={name}
           message={message}
+          fishSize={fishSize}
           nameError={nameError}
           messageError={messageError}
           submitError={submitError}
           isSubmitting={isSubmitting}
           onNameChange={handleNameChange}
           onMessageChange={handleMessageChange}
+          onFishSizeChange={setFishSize}
+          onBack={() => setStep("draw")}
           onSubmit={handleSubmit}
         />
       )}
 
-      {step === "sent" && <SentScreen />}
+      {step === "sent" && <SentScreen onDone={handleSentDone} />}
     </AppWrapper>
   );
 }

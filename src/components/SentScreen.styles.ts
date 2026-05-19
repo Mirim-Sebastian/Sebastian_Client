@@ -78,3 +78,19 @@ export const SentSubtitle = styled.p`
   letter-spacing: 0.03em;
   text-align: center;
 `;
+
+export const Countdown = styled.div`
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: rgba(230, 240, 255, 0.6);
+  margin-top: 8px;
+`;

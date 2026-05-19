@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { BaseScreen, shake } from "./ui.styles";
 
 export { IconButton } from "./ui.styles";
@@ -11,6 +11,29 @@ export const Screen = styled(BaseScreen)`
   align-items: center;
   justify-content: center;
   gap: 20px;
+`;
+
+export const BackButton = styled.button`
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 26, 50, 0.58);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(230, 240, 255, 0.8);
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(8, 26, 50, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
 `;
 
 // ─── Fish preview ─────────────────────────────────────────────────────────────
@@ -69,7 +92,7 @@ const InputField = styled.div<{ $error: boolean }>`
   border: 1px solid
     ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.14)")};
   transition: border-color 0.15s;
-  animation: ${({ $error }) => ($error ? `${shake} 0.35s ease` : "none")};
+  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
 
   &:focus-within {
     border-color: rgba(255, 255, 255, 0.3);
@@ -115,6 +138,34 @@ export const MessageField = styled(InputField)`
     &:disabled {
       opacity: 0.6;
     }
+  }
+`;
+
+export const SizeSelector = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const SizeButton = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  border: 1px solid
+    ${({ $active }) =>
+      $active ? "rgba(120, 200, 255, 0.8)" : "rgba(255, 255, 255, 0.14)"};
+  background: ${({ $active }) =>
+    $active ? "rgba(80, 170, 240, 0.25)" : "rgba(6, 22, 44, 0.5)"};
+  color: ${({ $active }) =>
+    $active ? "rgba(180, 230, 255, 1)" : "rgba(230, 240, 255, 0.45)"};
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 

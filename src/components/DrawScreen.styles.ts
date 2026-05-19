@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { BaseScreen, shake, IconButton } from "./ui.styles";
 
 export { IconButton };
@@ -247,7 +247,7 @@ export const CanvasWrap = styled.div<{ $error: boolean }>`
     0 30px 80px rgba(2, 8, 20, 0.24);
   min-height: 360px;
   backdrop-filter: blur(12px);
-  animation: ${({ $error }) => ($error ? `${shake} 0.35s ease` : "none")};
+  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
 
   @media (max-width: 900px) {
     min-height: 300px;
@@ -278,4 +278,18 @@ export const DrawingCanvas = styled(BaseCanvas)`
 export const FrameCanvas = styled(BaseCanvas)`
   pointer-events: none;
   z-index: 2;
+`;
+
+export const CanvasHint = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(230, 240, 255, 0.55);
+  letter-spacing: 0.04em;
 `;

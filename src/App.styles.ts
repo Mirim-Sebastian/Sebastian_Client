@@ -13,6 +13,11 @@ const appBubbleUp = keyframes`
   100% { transform: translateY(-105vh) translateX(0); opacity: 0; }
 `;
 
+const toastIn = keyframes`
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+`;
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
 export const AppWrapper = styled.div`
@@ -38,6 +43,27 @@ export const AppWrapper = styled.div`
       radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 28%);
     pointer-events: none;
   }
+`;
+
+export const AppToast = styled.div`
+  position: fixed;
+  bottom: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  padding: 13px 26px;
+  border-radius: 14px;
+  background: rgba(8, 26, 50, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 32px rgba(2, 8, 20, 0.45);
+  color: rgba(230, 240, 255, 0.92);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: ${toastIn} 0.22s ease;
 `;
 
 export const AppBubble = styled.div`

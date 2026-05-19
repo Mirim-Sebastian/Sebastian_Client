@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
-import { CheckIcon, SpinnerIcon } from "./icons";
+import { BackIcon, CheckIcon, SpinnerIcon } from "./icons";
 import {
+  BackButton,
   FieldLabel,
   FormActions,
   FormCard,
@@ -9,18 +10,31 @@ import {
   NameField,
   Preview,
   Screen,
+  SizeButton,
+  SizeSelector,
 } from "./NameScreen.styles";
+
+export type FishSize = "small" | "medium" | "large";
+
+const SIZE_OPTIONS: { value: FishSize; label: string }[] = [
+  { value: "small", label: "작게" },
+  { value: "medium", label: "중간" },
+  { value: "large", label: "크게" },
+];
 
 type NameScreenProps = {
   draftImage: string | null;
   name: string;
   message: string;
+  fishSize: FishSize;
   nameError: boolean;
   messageError: boolean;
   submitError: boolean;
   isSubmitting: boolean;
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  onFishSizeChange: (size: FishSize) => void;
+  onBack: () => void;
   onSubmit: () => void;
 };
 
@@ -28,15 +42,21 @@ export const NameScreen = ({
   draftImage,
   name,
   message,
+  fishSize,
   nameError,
   messageError,
   submitError,
   isSubmitting,
   onNameChange,
   onMessageChange,
+  onFishSizeChange,
+  onBack,
   onSubmit,
 }: NameScreenProps) => (
   <Screen>
+    <BackButton type="button" onClick={onBack} aria-label="뒤로가기">
+      <BackIcon />
+    </BackButton>
     {draftImage && (
       <Preview>
         <img src={draftImage} alt="" />
@@ -52,7 +72,7 @@ export const NameScreen = ({
           placeholder="이름을 입력하세요"
           onChange={onNameChange}
           onKeyDown={(event) => {
-            if (event.key === "Enter") onSubmit();
+            if (event.key === "Enter" && !event.nativeEvent.isComposing) onSubmit();
           }}
           aria-label="물고기 이름"
           disabled={isSubmitting}
@@ -70,6 +90,22 @@ export const NameScreen = ({
           rows={3}
         />
       </MessageField>
+      <div>
+        <FieldLabel as="span">물고기 크기</FieldLabel>
+        <SizeSelector>
+          {SIZE_OPTIONS.map(({ value, label }) => (
+            <SizeButton
+              key={value}
+              type="button"
+              $active={fishSize === value}
+              onClick={() => onFishSizeChange(value)}
+              disabled={isSubmitting}
+            >
+              {label}
+            </SizeButton>
+          ))}
+        </SizeSelector>
+      </div>
       <FormActions>
         <IconButton
           type="button"

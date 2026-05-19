@@ -113,6 +113,21 @@ export const FishSpeechBubble = styled.div`
   }
 `;
 
+export const SharkWrapper = styled.div`
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: center;
+`;
+
+export const SharkImage = styled.img`
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+`;
+
 export const OceanBubble = styled.div`
   position: absolute;
   bottom: -20px;

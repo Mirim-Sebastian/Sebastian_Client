@@ -42,6 +42,16 @@ export const FillIcon = () => (
   <img className="tool-icon-img" src={paintSvg} aria-hidden="true" alt="" />
 )
 
+export const BackIcon = ({ className }: IconProps) => (
+  <svg
+    className={["line-icon", className].filter(Boolean).join(" ")}
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export const SpinnerIcon = () => (
   <svg className="spinner line-icon" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="9" strokeWidth="2" opacity="0.3" />
