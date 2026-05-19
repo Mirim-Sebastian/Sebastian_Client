@@ -859,21 +859,17 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (step !== "sent") return;
-    const timer = window.setTimeout(() => {
-      setStep("draw");
-      setName("");
-      setMessage("");
-      setFishSize("medium");
-      setDraftImage(null);
-      resetDrawing();
-      setNameError(false);
-      setMessageError(false);
-      setSubmitError(false);
-    }, 5000);
-    return () => window.clearTimeout(timer);
-  }, [step]);
+  const handleSentDone = () => {
+    setStep("draw");
+    setName("");
+    setMessage("");
+    setFishSize("medium");
+    setDraftImage(null);
+    resetDrawing();
+    setNameError(false);
+    setMessageError(false);
+    setSubmitError(false);
+  };
 
   return (
     <AppWrapper>
@@ -958,7 +954,7 @@ function App() {
         />
       )}
 
-      {step === "sent" && <SentScreen />}
+      {step === "sent" && <SentScreen onDone={handleSentDone} />}
     </AppWrapper>
   );
 }
