@@ -118,6 +118,34 @@ export const MessageField = styled(InputField)`
   }
 `;
 
+export const SizeSelector = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const SizeButton = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  border: 1px solid
+    ${({ $active }) =>
+      $active ? "rgba(120, 200, 255, 0.8)" : "rgba(255, 255, 255, 0.14)"};
+  background: ${({ $active }) =>
+    $active ? "rgba(80, 170, 240, 0.25)" : "rgba(6, 22, 44, 0.5)"};
+  color: ${({ $active }) =>
+    $active ? "rgba(180, 230, 255, 1)" : "rgba(230, 240, 255, 0.45)"};
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 export const FormActions = styled.div`
   display: flex;
   justify-content: flex-end;

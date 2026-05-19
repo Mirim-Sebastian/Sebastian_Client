@@ -9,18 +9,30 @@ import {
   NameField,
   Preview,
   Screen,
+  SizeButton,
+  SizeSelector,
 } from "./NameScreen.styles";
+
+export type FishSize = "small" | "medium" | "large";
+
+const SIZE_OPTIONS: { value: FishSize; label: string }[] = [
+  { value: "small", label: "작게" },
+  { value: "medium", label: "중간" },
+  { value: "large", label: "크게" },
+];
 
 type NameScreenProps = {
   draftImage: string | null;
   name: string;
   message: string;
+  fishSize: FishSize;
   nameError: boolean;
   messageError: boolean;
   submitError: boolean;
   isSubmitting: boolean;
   onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+  onFishSizeChange: (size: FishSize) => void;
   onSubmit: () => void;
 };
 
@@ -28,12 +40,14 @@ export const NameScreen = ({
   draftImage,
   name,
   message,
+  fishSize,
   nameError,
   messageError,
   submitError,
   isSubmitting,
   onNameChange,
   onMessageChange,
+  onFishSizeChange,
   onSubmit,
 }: NameScreenProps) => (
   <Screen>
@@ -70,6 +84,22 @@ export const NameScreen = ({
           rows={3}
         />
       </MessageField>
+      <div>
+        <FieldLabel as="span">물고기 크기</FieldLabel>
+        <SizeSelector>
+          {SIZE_OPTIONS.map(({ value, label }) => (
+            <SizeButton
+              key={value}
+              type="button"
+              $active={fishSize === value}
+              onClick={() => onFishSizeChange(value)}
+              disabled={isSubmitting}
+            >
+              {label}
+            </SizeButton>
+          ))}
+        </SizeSelector>
+      </div>
       <FormActions>
         <IconButton
           type="button"

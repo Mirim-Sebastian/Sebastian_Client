@@ -34,6 +34,12 @@ interface Bubble {
 
 const BUBBLE_COUNT = 18;
 
+const FISH_SIZE_MAP: Record<string, number> = {
+  small: 200,
+  medium: 250,
+  large: 300,
+};
+
 function generateBubbles(): Bubble[] {
   return Array.from({ length: BUBBLE_COUNT }, (_, i) => ({
     id: i,
@@ -74,7 +80,7 @@ export default function OceanScreen() {
         verticalVelocity: (Math.random() - 0.5) * 0.08,
         wavePhase: Math.random() * Math.PI * 2,
         waveSpeed: 0.05 + Math.random() * 0.08,
-        scale: 220 + Math.random() * 60,
+        scale: FISH_SIZE_MAP[fish.size] ?? 200,
       };
 
       setFishList((prev) => [...prev, newFish]);
@@ -95,8 +101,14 @@ export default function OceanScreen() {
           let newWaveSpeed = fish.waveSpeed;
           const newWavePhase = fish.wavePhase + fish.waveSpeed;
 
-          if (newX > 92) { newX = 92; newDirection = -1; }
-          if (newX < 2)  { newX = 2;  newDirection = 1;  }
+          if (newX > 92) {
+            newX = 92;
+            newDirection = -1;
+          }
+          if (newX < 2) {
+            newX = 2;
+            newDirection = 1;
+          }
 
           if (Math.random() < 0.018) {
             newVerticalVelocity = (Math.random() - 0.5) * 0.12;
@@ -108,8 +120,14 @@ export default function OceanScreen() {
             Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
           let newY = fish.y + waveY + newVerticalVelocity;
 
-          if (newY > 84) { newY = 84; newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05); }
-          if (newY < 8)  { newY = 8;  newVerticalVelocity =  Math.abs(newVerticalVelocity || 0.05); }
+          if (newY > 84) {
+            newY = 84;
+            newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
+          }
+          if (newY < 8) {
+            newY = 8;
+            newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
+          }
 
           return {
             ...fish,
@@ -120,7 +138,7 @@ export default function OceanScreen() {
             wavePhase: newWavePhase,
             waveSpeed: newWaveSpeed,
           };
-        })
+        }),
       );
     }, 50);
 
@@ -148,12 +166,14 @@ export default function OceanScreen() {
             if (!fish.message) return;
             setActiveFishId(fish.id);
           }}
-          style={{
-            left: `${fish.x}%`,
-            top: `${fish.y}%`,
-            width: `${fish.scale}px`,
-            "--fish-direction": -fish.direction,
-          } as CSSProperties}
+          style={
+            {
+              left: `${fish.x}%`,
+              top: `${fish.y}%`,
+              width: `${fish.scale}px`,
+              "--fish-direction": -fish.direction,
+            } as CSSProperties
+          }
         >
           {activeFishId === fish.id && (
             <FishSpeechBubble>{fish.message}</FishSpeechBubble>

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
-import { NameScreen } from "./components/NameScreen";
+import { NameScreen, type FishSize } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
 import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
@@ -102,6 +102,7 @@ function App() {
   const [draftImage, setDraftImage] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [fishSize, setFishSize] = useState<FishSize>("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawError, setDrawError] = useState(false);
   const [canvasHint, setCanvasHint] = useState<string | null>(null);
@@ -845,6 +846,7 @@ function App() {
             ...savedFish,
             name: trimmedName,
             message: trimmedMessage,
+            size: fishSize,
           },
         }),
       );
@@ -927,12 +929,14 @@ function App() {
           draftImage={draftImage}
           name={name}
           message={message}
+          fishSize={fishSize}
           nameError={nameError}
           messageError={messageError}
           submitError={submitError}
           isSubmitting={isSubmitting}
           onNameChange={handleNameChange}
           onMessageChange={handleMessageChange}
+          onFishSizeChange={setFishSize}
           onSubmit={handleSubmit}
         />
       )}
