@@ -870,7 +870,7 @@ function App() {
 
       {canvasHint && <AppToast>{canvasHint}</AppToast>}
 
-      <div style={{ display: step === "draw" ? undefined : "none" }}>
+      <div style={{ display: step === "draw" ? "flex" : "none", width: "100%", justifyContent: "center" }}>
         <DrawScreen
           tool={tool}
           eraserMode={eraserMode}

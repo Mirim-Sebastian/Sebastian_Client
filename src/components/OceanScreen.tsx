@@ -99,7 +99,7 @@ function makeFish(
 
 function moveFish(fish: Fish): Fish {
   let newDirection = fish.direction;
-  const speed = fish.entering ? 0.55 : fish.speed;
+  const speed = fish.speed;
   let newX = fish.x + speed * newDirection;
   let newVerticalVelocity = fish.verticalVelocity;
   let newWaveSpeed = fish.waveSpeed;
