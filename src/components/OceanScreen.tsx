@@ -30,6 +30,7 @@ interface Fish {
   waveSpeed: number;
   scale: number;
   entering: boolean;
+  dragging?: boolean;
 }
 
 interface Shark {
@@ -111,6 +112,7 @@ function makeFish(
 }
 
 function moveFish(fish: Fish): Fish {
+  if (fish.dragging) return fish;
   let newDirection = fish.direction;
   const speed = fish.speed;
   let newX = fish.x + speed * newDirection;
@@ -153,6 +155,16 @@ export default function OceanScreen() {
   const socketRef = useRef<WebSocket | null>(null);
   const fishListRef = useRef<Fish[]>([]);
   const sharkRef = useRef<Shark | null>(null);
+  const oceanRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<{
+    fishId: number;
+    startX: number;
+    startY: number;
+    offsetX: number;
+    offsetY: number;
+    active: boolean;
+    longPressTimer: number | null;
+  } | null>(null);
 
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [shark, setShark] = useState<Shark | null>(null);
@@ -320,19 +332,77 @@ export default function OceanScreen() {
   };
 
   return (
-    <Ocean onClick={handleOceanClick}>
+    <Ocean onClick={handleOceanClick} ref={oceanRef}>
       {fishList.map((fish) => (
         <FishWrapper
           key={fish.id}
-          onPointerDown={() => {
-            if (!fish.message) return;
-            setActiveFishId(fish.id);
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            const timer = window.setTimeout(() => {
+              const drag = dragStateRef.current;
+              if (!drag) return;
+              const rect = oceanRef.current?.getBoundingClientRect();
+              const cur = fishListRef.current.find((f) => f.id === drag.fishId);
+              if (rect && cur) {
+                drag.offsetX = ((drag.startX - rect.left) / rect.width) * 100 - cur.x;
+                drag.offsetY = ((drag.startY - rect.top) / rect.height) * 100 - cur.y;
+              }
+              drag.active = true;
+              fishListRef.current = fishListRef.current.map((f) =>
+                f.id === drag.fishId ? { ...f, dragging: true } : f
+              );
+              setFishList([...fishListRef.current]);
+            }, 150);
+            dragStateRef.current = {
+              fishId: fish.id,
+              startX: e.clientX,
+              startY: e.clientY,
+              offsetX: 0,
+              offsetY: 0,
+              active: false,
+              longPressTimer: timer,
+            };
+          }}
+          onPointerMove={(e) => {
+            const drag = dragStateRef.current;
+            if (!drag || drag.fishId !== fish.id) return;
+            if (!drag.active) {
+              if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 35) {
+                if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
+                drag.longPressTimer = null;
+              }
+              return;
+            }
+            const rect = oceanRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            const x = ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX;
+            const y = ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY;
+            fishListRef.current = fishListRef.current.map((f) =>
+              f.id === fish.id
+                ? { ...f, x: Math.max(2, Math.min(92, x)), y: Math.max(8, Math.min(84, y)) }
+                : f
+            );
+            setFishList([...fishListRef.current]);
+          }}
+          onPointerUp={() => {
+            const drag = dragStateRef.current;
+            if (!drag || drag.fishId !== fish.id) return;
+            if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
+            fishListRef.current = fishListRef.current.map((f) =>
+              f.id === fish.id ? { ...f, dragging: false } : f
+            );
+            if (!drag.active && fish.message) setActiveFishId(fish.id);
+            dragStateRef.current = null;
+            setFishList([...fishListRef.current]);
           }}
           style={{
             left: `${fish.x}%`,
             top: `${fish.y}%`,
             width: `${fish.scale}px`,
             "--fish-direction": -fish.direction,
+            "--fish-anim-duration": `${1.1 + (fish.wavePhase % 1) * 0.8}s`,
+            cursor: fish.dragging ? "grabbing" : "grab",
+            transition: fish.dragging ? "none" : undefined,
           } as CSSProperties}
         >
           {activeFishId === fish.id && (
