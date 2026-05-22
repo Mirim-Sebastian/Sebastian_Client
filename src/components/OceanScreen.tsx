@@ -165,6 +165,7 @@ export default function OceanScreen() {
     active: boolean;
     longPressTimer: number | null;
   } | null>(null);
+  const fishDomRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [shark, setShark] = useState<Shark | null>(null);
@@ -294,8 +295,21 @@ export default function OceanScreen() {
         }
       }
 
+      // DOM 직접 업데이트 — React 리렌더링 우회
+      let structuralChange = false;
+      for (const fish of newFish) {
+        const el = fishDomRefs.current.get(fish.id);
+        if (el && !fish.dragging) {
+          el.style.left = `${fish.x}%`;
+          el.style.top = `${fish.y}%`;
+          el.style.setProperty("--fish-direction", String(-fish.direction));
+        }
+      }
+
+      // 물고기가 먹혔으면 구조적 변경만 React state에 반영
+      if (fishListRef.current.length !== newFish.length) structuralChange = true;
       fishListRef.current = newFish;
-      setFishList(newFish);
+      if (structuralChange) setFishList([...newFish]);
     }, 50);
 
     return () => clearInterval(interval);
@@ -336,6 +350,17 @@ export default function OceanScreen() {
       {fishList.map((fish) => (
         <FishWrapper
           key={fish.id}
+          ref={(el: HTMLDivElement | null) => {
+            if (el) {
+              fishDomRefs.current.set(fish.id, el);
+              el.style.left = `${fish.x}%`;
+              el.style.top = `${fish.y}%`;
+              el.style.setProperty("--fish-direction", String(-fish.direction));
+              el.style.setProperty("--fish-anim-duration", `${1.1 + (fish.wavePhase % 1) * 0.8}s`);
+            } else {
+              fishDomRefs.current.delete(fish.id);
+            }
+          }}
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
             const timer = window.setTimeout(() => {
@@ -348,10 +373,10 @@ export default function OceanScreen() {
                 drag.offsetY = ((drag.startY - rect.top) / rect.height) * 100 - cur.y;
               }
               drag.active = true;
-              fishListRef.current = fishListRef.current.map((f) =>
-                f.id === drag.fishId ? { ...f, dragging: true } : f
-              );
-              setFishList([...fishListRef.current]);
+              const el = fishDomRefs.current.get(drag.fishId);
+              if (el) { el.style.cursor = "grabbing"; el.style.transition = "none"; }
+              const idx = fishListRef.current.findIndex((f) => f.id === drag.fishId);
+              if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], dragging: true };
             }, 150);
             dragStateRef.current = {
               fishId: fish.id,
@@ -375,35 +400,25 @@ export default function OceanScreen() {
             }
             const rect = oceanRef.current?.getBoundingClientRect();
             if (!rect) return;
-            const x = ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX;
-            const y = ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY;
-            fishListRef.current = fishListRef.current.map((f) =>
-              f.id === fish.id
-                ? { ...f, x: Math.max(2, Math.min(92, x)), y: Math.max(8, Math.min(84, y)) }
-                : f
-            );
-            setFishList([...fishListRef.current]);
+            const x = Math.max(2, Math.min(92, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX));
+            const y = Math.max(8, Math.min(84, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY));
+            const idx = fishListRef.current.findIndex((f) => f.id === fish.id);
+            if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
+            const el = fishDomRefs.current.get(fish.id);
+            if (el) { el.style.left = `${x}%`; el.style.top = `${y}%`; }
           }}
           onPointerUp={() => {
             const drag = dragStateRef.current;
             if (!drag || drag.fishId !== fish.id) return;
             if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
-            fishListRef.current = fishListRef.current.map((f) =>
-              f.id === fish.id ? { ...f, dragging: false } : f
-            );
+            const el = fishDomRefs.current.get(fish.id);
+            if (el) { el.style.cursor = "grab"; el.style.transition = ""; }
+            const idx = fishListRef.current.findIndex((f) => f.id === fish.id);
+            if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], dragging: false };
             if (!drag.active && fish.message) setActiveFishId(fish.id);
             dragStateRef.current = null;
-            setFishList([...fishListRef.current]);
           }}
-          style={{
-            left: `${fish.x}%`,
-            top: `${fish.y}%`,
-            width: `${fish.scale}px`,
-            "--fish-direction": -fish.direction,
-            "--fish-anim-duration": `${1.1 + (fish.wavePhase % 1) * 0.8}s`,
-            cursor: fish.dragging ? "grabbing" : "grab",
-            transition: fish.dragging ? "none" : undefined,
-          } as CSSProperties}
+          style={{ width: `${fish.scale}px` } as CSSProperties}
         >
           {activeFishId === fish.id && (
             <FishSpeechBubble>{fish.message}</FishSpeechBubble>

@@ -56,9 +56,9 @@ export const FishWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: left 0.05s linear, top 0.3s ease-in-out;
   z-index: 2;
-  cursor: pointer;
+  cursor: grab;
+  will-change: left, top;
 `;
 
 export const FishImage = styled.img`
