@@ -370,13 +370,17 @@ function App() {
   const exportImage = (): string | null => {
     const canvas = drawCanvasRef.current;
     if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
     const exportCanvas = document.createElement("canvas");
-    exportCanvas.width  = canvas.width;
-    exportCanvas.height = canvas.height;
+    exportCanvas.width  = w;
+    exportCanvas.height = h;
     const ctx = exportCanvas.getContext("2d");
     if (!ctx) return null;
-    ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
-    return exportCanvas.toDataURL("image/png");
+    ctx.drawImage(canvas, 0, 0, w, h);
+    const webp = exportCanvas.toDataURL("image/webp", 0.85);
+    return webp.startsWith("data:image/webp") ? webp : exportCanvas.toDataURL("image/png");
   };
 
   const handleCompleteDrawing = () => {

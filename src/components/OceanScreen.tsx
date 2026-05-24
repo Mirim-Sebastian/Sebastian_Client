@@ -83,6 +83,9 @@ const SHARK_EAT_DIST = 13;
 const SHARK_MOUTH_DIST = 20;
 const SHARK_Y_OFFSET = -12;
 const SHARK_SIZE = 480;
+const MAX_FISH = 250;
+const WS_URL =
+  (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
 
 const FISH_SIZE_MAP: Record<string, number> = {
   small: 200,
@@ -104,7 +107,14 @@ function generateBubbles(): Bubble[] {
 }
 
 function makeFish(
-  data: { name: string; image: string; message: string; size?: string; _id?: string; id?: string },
+  data: {
+    name: string;
+    image: string;
+    message: string;
+    size?: string;
+    _id?: string;
+    id?: string;
+  },
   id: number,
   isNew = false,
 ): Fish {
@@ -118,7 +128,7 @@ function makeFish(
     x: isNew ? (fromRight ? 104 : -22) : 5 + Math.random() * 80,
     y: 10 + Math.random() * 70,
     speed: 0.08 + Math.random() * 0.12,
-    direction: isNew ? (fromRight ? -1 : 1) : (Math.random() < 0.5 ? 1 : -1),
+    direction: isNew ? (fromRight ? -1 : 1) : Math.random() < 0.5 ? 1 : -1,
     verticalVelocity: (Math.random() - 0.5) * 0.08,
     wavePhase: Math.random() * Math.PI * 2,
     waveSpeed: 0.05 + Math.random() * 0.08,
@@ -138,8 +148,14 @@ function moveFish(fish: Fish): Fish {
 
   const entering = fish.entering && (newX < 2 || newX > 92);
   if (!entering) {
-    if (newX > 92) { newX = 92; newDirection = -1; }
-    if (newX < 2)  { newX = 2;  newDirection =  1; }
+    if (newX > 92) {
+      newX = 92;
+      newDirection = -1;
+    }
+    if (newX < 2) {
+      newX = 2;
+      newDirection = 1;
+    }
   }
 
   if (Math.random() < 0.018) {
@@ -152,8 +168,14 @@ function moveFish(fish: Fish): Fish {
     Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
   let newY = fish.y + waveY + newVerticalVelocity;
 
-  if (newY > 84) { newY = 84; newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05); }
-  if (newY < 8)  { newY = 8;  newVerticalVelocity =  Math.abs(newVerticalVelocity || 0.05); }
+  if (newY > 84) {
+    newY = 84;
+    newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
+  }
+  if (newY < 8) {
+    newY = 8;
+    newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
+  }
 
   return {
     ...fish,
@@ -186,7 +208,9 @@ function tickShark(
       if (dist < SHARK_EAT_DIST) {
         onEat(target);
         nextFish = fish.filter((f) => f.id !== targetId);
-        phase = "exit"; targetId = null; mouthOpen = false;
+        phase = "exit";
+        targetId = null;
+        mouthOpen = false;
         x += exitDir * SHARK_SPEED;
       } else {
         x += (dx / dist) * SHARK_SPEED;
@@ -194,7 +218,9 @@ function tickShark(
         direction = dx > 0 ? 1 : -1;
       }
     } else {
-      phase = "exit"; targetId = null; mouthOpen = false;
+      phase = "exit";
+      targetId = null;
+      mouthOpen = false;
     }
   } else if (phase === "exit") {
     mouthOpen = false;
@@ -202,18 +228,24 @@ function tickShark(
   }
 
   if (x > 130 || x < -30) return { next: null, fish: nextFish };
-  return { next: { x, y, direction, exitDir, phase, targetId, mouthOpen }, fish: nextFish };
+  return {
+    next: { x, y, direction, exitDir, phase, targetId, mouthOpen },
+    fish: nextFish,
+  };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OceanScreen() {
-  const socketRef   = useRef<WebSocket | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
   const fishListRef = useRef<Fish[]>([]);
-  const sharkRef    = useRef<Shark | null>(null);
-  const oceanRef    = useRef<HTMLDivElement | null>(null);
+  const sharkRef = useRef<Shark | null>(null);
+  const oceanRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
-  const fishDomRefs  = useRef<Map<number, HTMLDivElement>>(new Map());
+  const fishDomRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const sharkDomRef = useRef<HTMLDivElement | null>(null);
+  const sharkImgRef = useRef<HTMLImageElement | null>(null);
+  const prevMouthRef = useRef<boolean>(false);
 
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [shark, setShark] = useState<Shark | null>(null);
@@ -234,15 +266,30 @@ export default function OceanScreen() {
     }
     drag.active = true;
     const el = fishDomRefs.current.get(fishId);
-    if (el) { el.style.cursor = "grabbing"; el.style.transition = "none"; }
+    if (el) {
+      el.style.cursor = "grabbing";
+      el.style.transition = "none";
+    }
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
-    if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], dragging: true };
+    if (idx !== -1)
+      fishListRef.current[idx] = {
+        ...fishListRef.current[idx],
+        dragging: true,
+      };
   };
 
   const handlePointerDown = (fishId: number, e: React.PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     const timer = window.setTimeout(() => activateDrag(fishId), 150);
-    dragStateRef.current = { fishId, startX: e.clientX, startY: e.clientY, offsetX: 0, offsetY: 0, active: false, longPressTimer: timer };
+    dragStateRef.current = {
+      fishId,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: 0,
+      offsetY: 0,
+      active: false,
+      longPressTimer: timer,
+    };
   };
 
   const handlePointerMove = (fishId: number, e: React.PointerEvent) => {
@@ -250,19 +297,30 @@ export default function OceanScreen() {
     if (!drag || drag.fishId !== fishId) return;
     if (!drag.active) {
       if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > 35) {
-        if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
+        if (drag.longPressTimer !== null)
+          window.clearTimeout(drag.longPressTimer);
         drag.longPressTimer = null;
       }
       return;
     }
     const rect = oceanRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = Math.max(2, Math.min(92, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX));
-    const y = Math.max(8, Math.min(84, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY));
+    const x = Math.max(
+      2,
+      Math.min(92, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
+    );
+    const y = Math.max(
+      8,
+      Math.min(84, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY),
+    );
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
-    if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
+    if (idx !== -1)
+      fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
     const el = fishDomRefs.current.get(fishId);
-    if (el) { el.style.left = `${x}%`; el.style.top = `${y}%`; }
+    if (el) {
+      el.style.left = `${x}%`;
+      el.style.top = `${y}%`;
+    }
   };
 
   const handlePointerUp = (fishId: number, message: string) => {
@@ -270,9 +328,16 @@ export default function OceanScreen() {
     if (!drag || drag.fishId !== fishId) return;
     if (drag.longPressTimer !== null) window.clearTimeout(drag.longPressTimer);
     const el = fishDomRefs.current.get(fishId);
-    if (el) { el.style.cursor = "grab"; el.style.transition = ""; }
+    if (el) {
+      el.style.cursor = "grab";
+      el.style.transition = "";
+    }
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
-    if (idx !== -1) fishListRef.current[idx] = { ...fishListRef.current[idx], dragging: false };
+    if (idx !== -1)
+      fishListRef.current[idx] = {
+        ...fishListRef.current[idx],
+        dragging: false,
+      };
     if (!drag.active && message) setActiveFishId(fishId);
     dragStateRef.current = null;
   };
@@ -284,17 +349,23 @@ export default function OceanScreen() {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     const count = 3 + Math.floor(Math.random() * 2);
-    const newBubbles: ClickBubbleData[] = Array.from({ length: count }, (_, i) => ({
-      id: Date.now() + i,
-      x, y,
-      offsetX: (Math.random() - 0.5) * 32,
-      size: 5 + Math.random() * 11,
-      drift: (Math.random() - 0.5) * 52,
-      duration: 0.8 + Math.random() * 0.7,
-      delay: Math.random() * 0.18,
-    }));
+    const newBubbles: ClickBubbleData[] = Array.from(
+      { length: count },
+      (_, i) => ({
+        id: Date.now() + i,
+        x,
+        y,
+        offsetX: (Math.random() - 0.5) * 32,
+        size: 5 + Math.random() * 11,
+        drift: (Math.random() - 0.5) * 52,
+        duration: 0.8 + Math.random() * 0.7,
+        delay: Math.random() * 0.18,
+      }),
+    );
     setClickBubbles((prev) => [...prev, ...newBubbles]);
-    const maxMs = Math.max(...newBubbles.map((b) => (b.duration + b.delay) * 1000));
+    const maxMs = Math.max(
+      ...newBubbles.map((b) => (b.duration + b.delay) * 1000),
+    );
     setTimeout(() => {
       const ids = new Set(newBubbles.map((b) => b.id));
       setClickBubbles((prev) => prev.filter((b) => !ids.has(b.id)));
@@ -306,7 +377,7 @@ export default function OceanScreen() {
   useEffect(() => {
     getFishes()
       .then((fishes) => {
-        const loaded = fishes.map((f, i) => makeFish(f, i));
+        const loaded = fishes.slice(-MAX_FISH).map((f, i) => makeFish(f, i));
         fishListRef.current = loaded;
         setFishList(loaded);
       })
@@ -317,20 +388,28 @@ export default function OceanScreen() {
     let unmounted = false;
     const connect = () => {
       if (unmounted) return;
-      const ws = new WebSocket("ws://localhost:8000");
-      ws.onopen  = () => console.log("[WS] connected");
+      const ws = new WebSocket(WS_URL);
+      ws.onopen = () => console.log("[WS] connected");
       ws.onerror = (e) => console.error("[WS] error", e);
-      ws.onclose = (e) => { console.warn("[WS] closed", e.code); if (!unmounted) setTimeout(connect, 2000); };
-      ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        const newFish = makeFish(msg.data ?? msg, Date.now(), true);
-        fishListRef.current = [...fishListRef.current, newFish];
-        setFishList([...fishListRef.current]);
+      ws.onclose = (e) => {
+        console.warn("[WS] closed", e.code);
+        if (!unmounted) setTimeout(connect, 2000);
+      };
+      ws.onmessage = (event: MessageEvent<string>) => {
+        const msg = JSON.parse(event.data) as { data?: Parameters<typeof makeFish>[0] };
+        const newFish = makeFish(msg.data ?? (msg as unknown as Parameters<typeof makeFish>[0]), Date.now(), true);
+        let next = [...fishListRef.current, newFish];
+        if (next.length > MAX_FISH) next = next.slice(next.length - MAX_FISH);
+        fishListRef.current = next;
+        setFishList(next);
       };
       socketRef.current = ws;
     };
     connect();
-    return () => { unmounted = true; socketRef.current?.close(); };
+    return () => {
+      unmounted = true;
+      socketRef.current?.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -344,14 +423,35 @@ export default function OceanScreen() {
         });
         fish = result.fish;
         sharkRef.current = result.next;
-        setShark(result.next);
+
+        if (result.next) {
+          // Update shark position directly in DOM — no React re-render
+          if (sharkDomRef.current) {
+            sharkDomRef.current.style.left = `${result.next.x}%`;
+            sharkDomRef.current.style.top = `${result.next.y}%`;
+            sharkDomRef.current.style.transform = `scaleX(${-result.next.direction})`;
+          }
+          // Only swap image when mouth state changes
+          if (result.next.mouthOpen !== prevMouthRef.current) {
+            prevMouthRef.current = result.next.mouthOpen;
+            if (sharkImgRef.current) {
+              sharkImgRef.current.src =
+                result.next.phase === "chase" && result.next.mouthOpen
+                  ? eatSharkImg
+                  : sharkImg;
+            }
+          }
+        } else {
+          // Shark left screen — trigger React to unmount it
+          setShark(null);
+        }
       }
 
       for (const f of fish) {
         const el = fishDomRefs.current.get(f.id);
         if (el && !f.dragging) {
           el.style.left = `${f.x}%`;
-          el.style.top  = `${f.y}%`;
+          el.style.top = `${f.y}%`;
           el.style.setProperty("--fish-direction", String(-f.direction));
         }
       }
@@ -376,7 +476,10 @@ export default function OceanScreen() {
 
   const spawnShark = () => {
     if (sharkRef.current || fishListRef.current.length === 0) return;
-    const target = fishListRef.current[Math.floor(Math.random() * fishListRef.current.length)];
+    const target =
+      fishListRef.current[
+        Math.floor(Math.random() * fishListRef.current.length)
+      ];
     const fromRight = Math.random() < 0.5;
     const newShark: Shark = {
       x: fromRight ? 130 : -30,
@@ -388,7 +491,8 @@ export default function OceanScreen() {
       mouthOpen: false,
     };
     sharkRef.current = newShark;
-    setShark(newShark);
+    prevMouthRef.current = false;
+    setShark(newShark); // triggers React to mount SharkWrapper, then DOM updates take over
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -402,9 +506,12 @@ export default function OceanScreen() {
             if (el) {
               fishDomRefs.current.set(fish.id, el);
               el.style.left = `${fish.x}%`;
-              el.style.top  = `${fish.y}%`;
+              el.style.top = `${fish.y}%`;
               el.style.setProperty("--fish-direction", String(-fish.direction));
-              el.style.setProperty("--fish-anim-duration", `${1.1 + (fish.wavePhase % 1) * 0.8}s`);
+              el.style.setProperty(
+                "--fish-anim-duration",
+                `${1.1 + (fish.wavePhase % 1) * 0.8}s`,
+              );
             } else {
               fishDomRefs.current.delete(fish.id);
             }
@@ -414,7 +521,9 @@ export default function OceanScreen() {
           onPointerUp={() => handlePointerUp(fish.id, fish.message)}
           style={{ width: `${fish.scale}px` } as CSSProperties}
         >
-          {activeFishId === fish.id && <FishSpeechBubble>{fish.message}</FishSpeechBubble>}
+          {activeFishId === fish.id && (
+            <FishSpeechBubble>{fish.message}</FishSpeechBubble>
+          )}
           <FishImage src={fish.image} alt={fish.name} />
           <FishLabel>{fish.name}</FishLabel>
         </FishWrapper>
@@ -422,15 +531,23 @@ export default function OceanScreen() {
 
       {shark && (
         <SharkWrapper
-          style={{
-            left: `${shark.x}%`,
-            top: `${shark.y}%`,
-            width: `${SHARK_SIZE}px`,
-            transform: `scaleX(${-shark.direction})`,
-          } as CSSProperties}
+          ref={sharkDomRef}
+          style={
+            {
+              left: `${shark.x}%`,
+              top: `${shark.y}%`,
+              width: `${SHARK_SIZE}px`,
+              transform: `scaleX(${-shark.direction})`,
+            } as CSSProperties
+          }
         >
           <SharkImage
-            src={shark.phase === "chase" && shark.mouthOpen ? eatSharkImg : sharkImg}
+            ref={sharkImgRef}
+            src={
+              shark.phase === "chase" && shark.mouthOpen
+                ? eatSharkImg
+                : sharkImg
+            }
             alt="상어"
           />
         </SharkWrapper>
@@ -439,7 +556,13 @@ export default function OceanScreen() {
       {/* TEST BUTTON - 나중에 삭제 */}
       <button
         onClick={spawnShark}
-        style={{ position: "fixed", bottom: 16, right: 16, zIndex: 99, padding: "8px 16px" }}
+        style={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          zIndex: 99,
+          padding: "8px 16px",
+        }}
       >
         🦈 상어 호출
       </button>
@@ -447,28 +570,32 @@ export default function OceanScreen() {
       {clickBubbles.map((cb) => (
         <ClickBubble
           key={cb.id}
-          style={{
-            left: `calc(${cb.x}% + ${cb.offsetX}px)`,
-            top: `${cb.y}%`,
-            "--cb-size": `${cb.size}px`,
-            "--cb-drift": `${cb.drift}px`,
-            "--cb-duration": `${cb.duration}s`,
-            "--cb-delay": `${cb.delay}s`,
-          } as CSSProperties}
+          style={
+            {
+              left: `calc(${cb.x}% + ${cb.offsetX}px)`,
+              top: `${cb.y}%`,
+              "--cb-size": `${cb.size}px`,
+              "--cb-drift": `${cb.drift}px`,
+              "--cb-duration": `${cb.duration}s`,
+              "--cb-delay": `${cb.delay}s`,
+            } as CSSProperties
+          }
         />
       ))}
 
       {bubbles.map((b) => (
         <OceanBubble
           key={b.id}
-          style={{
-            left: `${b.left}%`,
-            width: `${b.size}px`,
-            height: `${b.size}px`,
-            animationDuration: `${b.duration}s`,
-            animationDelay: `${b.delay}s`,
-            "--bubble-peak": b.peakOpacity,
-          } as CSSProperties}
+          style={
+            {
+              left: `${b.left}%`,
+              width: `${b.size}px`,
+              height: `${b.size}px`,
+              animationDuration: `${b.duration}s`,
+              animationDelay: `${b.delay}s`,
+              "--bubble-peak": b.peakOpacity,
+            } as CSSProperties
+          }
         />
       ))}
     </Ocean>
