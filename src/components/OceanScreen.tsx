@@ -137,14 +137,14 @@ function makeFish(
   };
 }
 
-function moveFish(fish: Fish): Fish {
+function moveFish(fish: Fish, t: number): Fish {
   if (fish.dragging) return fish;
 
   let newDirection = fish.direction;
-  let newX = fish.x + fish.speed * newDirection;
+  let newX = fish.x + fish.speed * newDirection * t;
   let newVerticalVelocity = fish.verticalVelocity;
   let newWaveSpeed = fish.waveSpeed;
-  const newWavePhase = fish.wavePhase + fish.waveSpeed;
+  const newWavePhase = fish.wavePhase + fish.waveSpeed * t;
 
   const entering = fish.entering && (newX < 2 || newX > 92);
   if (!entering) {
@@ -158,7 +158,7 @@ function moveFish(fish: Fish): Fish {
     }
   }
 
-  if (Math.random() < 0.018) {
+  if (Math.random() < 0.018 * t) {
     newVerticalVelocity = (Math.random() - 0.5) * 0.12;
     newWaveSpeed = 0.035 + Math.random() * 0.1;
   }
@@ -166,7 +166,7 @@ function moveFish(fish: Fish): Fish {
   const waveY =
     Math.sin(newWavePhase) * 0.06 +
     Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
-  let newY = fish.y + waveY + newVerticalVelocity;
+  let newY = fish.y + (waveY + newVerticalVelocity) * t;
 
   if (newY > 84) {
     newY = 84;
@@ -192,6 +192,7 @@ function moveFish(fish: Fish): Fish {
 function tickShark(
   shark: Shark,
   fish: Fish[],
+  t: number,
   onEat: (eaten: Fish) => void,
 ): { next: Shark | null; fish: Fish[] } {
   let { x, y, direction, phase, targetId, mouthOpen } = shark;
@@ -211,10 +212,10 @@ function tickShark(
         phase = "exit";
         targetId = null;
         mouthOpen = false;
-        x += exitDir * SHARK_SPEED;
+        x += exitDir * SHARK_SPEED * t;
       } else {
-        x += (dx / dist) * SHARK_SPEED;
-        y += (dy / dist) * SHARK_SPEED;
+        x += (dx / dist) * SHARK_SPEED * t;
+        y += (dy / dist) * SHARK_SPEED * t;
         direction = dx > 0 ? 1 : -1;
       }
     } else {
@@ -224,7 +225,7 @@ function tickShark(
     }
   } else if (phase === "exit") {
     mouthOpen = false;
-    x += exitDir * SHARK_SPEED;
+    x += exitDir * SHARK_SPEED * t;
   }
 
   if (x > 130 || x < -30) return { next: null, fish: nextFish };
@@ -318,8 +319,7 @@ export default function OceanScreen() {
       fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
     const el = fishDomRefs.current.get(fishId);
     if (el) {
-      el.style.left = `${x}%`;
-      el.style.top = `${y}%`;
+      el.style.transform = `translate(${x}vw, ${y}vh)`;
     }
   };
 
@@ -413,25 +413,29 @@ export default function OceanScreen() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      let fish = fishListRef.current.map(moveFish);
+    let rafId: number;
+    let lastTime = 0;
+
+    const tick = (now: number) => {
+      // First frame uses 50ms (original tick rate); subsequent frames use real delta
+      const delta = lastTime === 0 ? 50 : Math.min(now - lastTime, 100);
+      lastTime = now;
+      const t = delta / 50; // normalize: t=1 at original 50ms, t≈0.33 at 60fps
+
+      let fish = fishListRef.current.map((f) => moveFish(f, t));
       const currentShark = sharkRef.current;
 
       if (currentShark) {
-        const result = tickShark(currentShark, fish, (eaten) => {
+        const result = tickShark(currentShark, fish, t, (eaten) => {
           if (eaten.dbId) deleteFish(eaten.dbId).catch(console.error);
         });
         fish = result.fish;
         sharkRef.current = result.next;
 
         if (result.next) {
-          // Update shark position directly in DOM — no React re-render
           if (sharkDomRef.current) {
-            sharkDomRef.current.style.left = `${result.next.x}%`;
-            sharkDomRef.current.style.top = `${result.next.y}%`;
-            sharkDomRef.current.style.transform = `scaleX(${-result.next.direction})`;
+            sharkDomRef.current.style.transform = `translate(${result.next.x}vw, ${result.next.y}vh) scaleX(${-result.next.direction})`;
           }
-          // Only swap image when mouth state changes
           if (result.next.mouthOpen !== prevMouthRef.current) {
             prevMouthRef.current = result.next.mouthOpen;
             if (sharkImgRef.current) {
@@ -442,7 +446,6 @@ export default function OceanScreen() {
             }
           }
         } else {
-          // Shark left screen — trigger React to unmount it
           setShark(null);
         }
       }
@@ -450,8 +453,7 @@ export default function OceanScreen() {
       for (const f of fish) {
         const el = fishDomRefs.current.get(f.id);
         if (el && !f.dragging) {
-          el.style.left = `${f.x}%`;
-          el.style.top = `${f.y}%`;
+          el.style.transform = `translate(${f.x}vw, ${f.y}vh)`;
           el.style.setProperty("--fish-direction", String(-f.direction));
         }
       }
@@ -459,8 +461,12 @@ export default function OceanScreen() {
       const removed = fishListRef.current.length !== fish.length;
       fishListRef.current = fish;
       if (removed) setFishList([...fish]);
-    }, 50);
-    return () => clearInterval(interval);
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   useEffect(() => {
@@ -505,8 +511,7 @@ export default function OceanScreen() {
           ref={(el: HTMLDivElement | null) => {
             if (el) {
               fishDomRefs.current.set(fish.id, el);
-              el.style.left = `${fish.x}%`;
-              el.style.top = `${fish.y}%`;
+              el.style.transform = `translate(${fish.x}vw, ${fish.y}vh)`;
               el.style.setProperty("--fish-direction", String(-fish.direction));
               el.style.setProperty(
                 "--fish-anim-duration",
@@ -534,10 +539,8 @@ export default function OceanScreen() {
           ref={sharkDomRef}
           style={
             {
-              left: `${shark.x}%`,
-              top: `${shark.y}%`,
               width: `${SHARK_SIZE}px`,
-              transform: `scaleX(${-shark.direction})`,
+              transform: `translate(${shark.x}vw, ${shark.y}vh) scaleX(${-shark.direction})`,
             } as CSSProperties
           }
         >

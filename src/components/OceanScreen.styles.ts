@@ -53,12 +53,14 @@ export const Ocean = styled.div`
 
 export const FishWrapper = styled.div`
   position: absolute;
+  left: 0;
+  top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 2;
   cursor: grab;
-  will-change: left, top;
+  will-change: transform;
 `;
 
 export const FishImage = styled.img`
@@ -122,9 +124,12 @@ export const FishSpeechBubble = styled.div`
 
 export const SharkWrapper = styled.div`
   position: absolute;
+  left: 0;
+  top: 0;
   z-index: 3;
   pointer-events: none;
   transform-origin: center;
+  will-change: transform;
 `;
 
 export const SharkImage = styled.img`
