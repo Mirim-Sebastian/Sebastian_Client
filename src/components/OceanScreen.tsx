@@ -1,8 +1,10 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
+import type React from "react";
 import { deleteFish, getFishes } from "../api/fish";
 import sharkImg from "../assets/images/shark.png";
 import eatSharkImg from "../assets/images/eat_shark.png";
 import {
+  ClickBubble,
   FishImage,
   FishLabel,
   FishSpeechBubble,
@@ -47,6 +49,17 @@ interface Bubble {
   duration: number;
   delay: number;
   peakOpacity: number;
+}
+
+interface ClickBubbleData {
+  id: number;
+  x: number;
+  y: number;
+  offsetX: number;
+  size: number;
+  drift: number;
+  duration: number;
+  delay: number;
 }
 
 const BUBBLE_COUNT = 18;
@@ -145,6 +158,33 @@ export default function OceanScreen() {
   const [shark, setShark] = useState<Shark | null>(null);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
   const [activeFishId, setActiveFishId] = useState<number | null>(null);
+  const [clickBubbles, setClickBubbles] = useState<ClickBubbleData[]>([]);
+
+  const handleOceanClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    const count = 3 + Math.floor(Math.random() * 2);
+    const newBubbles: ClickBubbleData[] = Array.from({ length: count }, (_, i) => ({
+      id: Date.now() + i,
+      x,
+      y,
+      offsetX: (Math.random() - 0.5) * 32,
+      size: 5 + Math.random() * 11,
+      drift: (Math.random() - 0.5) * 52,
+      duration: 0.8 + Math.random() * 0.7,
+      delay: Math.random() * 0.18,
+    }));
+
+    setClickBubbles((prev) => [...prev, ...newBubbles]);
+
+    const maxMs = Math.max(...newBubbles.map((b) => (b.duration + b.delay) * 1000));
+    setTimeout(() => {
+      const ids = new Set(newBubbles.map((b) => b.id));
+      setClickBubbles((prev) => prev.filter((b) => !ids.has(b.id)));
+    }, maxMs + 100);
+  };
 
   useEffect(() => {
     getFishes()
@@ -280,7 +320,7 @@ export default function OceanScreen() {
   };
 
   return (
-    <Ocean>
+    <Ocean onClick={handleOceanClick}>
       {fishList.map((fish) => (
         <FishWrapper
           key={fish.id}
@@ -326,6 +366,20 @@ export default function OceanScreen() {
       >
         🦈 상어 호출
       </button>
+
+      {clickBubbles.map((cb) => (
+        <ClickBubble
+          key={cb.id}
+          style={{
+            left: `calc(${cb.x}% + ${cb.offsetX}px)`,
+            top: `${cb.y}%`,
+            "--cb-size": `${cb.size}px`,
+            "--cb-drift": `${cb.drift}px`,
+            "--cb-duration": `${cb.duration}s`,
+            "--cb-delay": `${cb.delay}s`,
+          } as CSSProperties}
+        />
+      ))}
 
       {bubbles.map((b) => (
         <OceanBubble

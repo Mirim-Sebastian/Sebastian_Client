@@ -11,6 +11,13 @@ const wiggle = keyframes`
   100% { transform: scaleX(var(--fish-direction, 1)) rotate(0deg); }
 `;
 
+const clickBubbleRise = keyframes`
+  0%   { opacity: 0;    transform: translate(0, 0)                            scale(0.2); }
+  15%  { opacity: 0.85; transform: translate(0, -10px)                        scale(1); }
+  85%  { opacity: 0.35; }
+  100% { opacity: 0;    transform: translate(var(--cb-drift, 0px), -120px)    scale(0.4); }
+`;
+
 const bubblePop = keyframes`
   from {
     opacity: 0;
@@ -126,6 +133,25 @@ export const SharkImage = styled.img`
   display: block;
   pointer-events: none;
   user-select: none;
+`;
+
+export const ClickBubble = styled.div`
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  width: var(--cb-size, 8px);
+  height: var(--cb-size, 8px);
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(255, 255, 255, 0.9),
+    rgba(180, 220, 255, 0.25)
+  );
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.55),
+    0 0 6px rgba(180, 220, 255, 0.2);
+  animation: ${clickBubbleRise} var(--cb-duration, 1s) ease-out forwards;
+  animation-delay: var(--cb-delay, 0s);
 `;
 
 export const OceanBubble = styled.div`
