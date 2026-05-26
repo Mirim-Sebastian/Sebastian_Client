@@ -511,8 +511,12 @@ export default function OceanScreen() {
           ref={(el: HTMLDivElement | null) => {
             if (el) {
               fishDomRefs.current.set(fish.id, el);
-              el.style.transform = `translate(${fish.x}vw, ${fish.y}vh)`;
-              el.style.setProperty("--fish-direction", String(-fish.direction));
+              // fishListRef.current has the latest position/direction;
+              // fish (from fishList state) is a stale snapshot that only updates
+              // when a fish is added/removed — NOT when direction changes mid-swim.
+              const cur = fishListRef.current.find((f) => f.id === fish.id) ?? fish;
+              el.style.transform = `translate(${cur.x}vw, ${cur.y}vh)`;
+              el.style.setProperty("--fish-direction", String(-cur.direction));
               el.style.setProperty(
                 "--fish-anim-duration",
                 `${1.1 + (fish.wavePhase % 1) * 0.8}s`,
