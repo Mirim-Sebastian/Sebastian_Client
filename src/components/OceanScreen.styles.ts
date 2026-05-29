@@ -53,14 +53,12 @@ export const Ocean = styled.div`
 
 export const FishWrapper = styled.div`
   position: absolute;
-  left: 0;
-  top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 2;
   cursor: grab;
-  will-change: transform;
+  will-change: left, top;
 `;
 
 export const FishImage = styled.img`

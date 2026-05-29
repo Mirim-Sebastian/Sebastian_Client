@@ -238,14 +238,14 @@ function tickShark(
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OceanScreen() {
-  const socketRef = useRef<WebSocket | null>(null);
-  const fishListRef = useRef<Fish[]>([]);
-  const sharkRef = useRef<Shark | null>(null);
-  const oceanRef = useRef<HTMLDivElement | null>(null);
+  const socketRef    = useRef<WebSocket | null>(null);
+  const fishListRef  = useRef<Fish[]>([]);
+  const sharkRef     = useRef<Shark | null>(null);
+  const oceanRef     = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
-  const fishDomRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const sharkDomRef = useRef<HTMLDivElement | null>(null);
-  const sharkImgRef = useRef<HTMLImageElement | null>(null);
+  const fishDomRefs  = useRef<Map<number, HTMLDivElement>>(new Map());
+  const sharkDomRef  = useRef<HTMLDivElement | null>(null);
+  const sharkImgRef  = useRef<HTMLImageElement | null>(null);
   const prevMouthRef = useRef<boolean>(false);
 
   const [fishList, setFishList] = useState<Fish[]>([]);
@@ -319,7 +319,8 @@ export default function OceanScreen() {
       fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
     const el = fishDomRefs.current.get(fishId);
     if (el) {
-      el.style.transform = `translate(${x}vw, ${y}vh)`;
+      el.style.left = `${x}%`;
+      el.style.top = `${y}%`;
     }
   };
 
@@ -375,6 +376,17 @@ export default function OceanScreen() {
   // ─── Effects ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    const audio = new Audio("/바다bgm2(잔잔발랄).mp3");
+    audio.loop = true;
+    audio.volume = 0.4;
+    audio.play().catch(() => {});
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  useEffect(() => {
     getFishes()
       .then((fishes) => {
         const loaded = fishes.slice(-MAX_FISH).map((f, i) => makeFish(f, i));
@@ -422,6 +434,12 @@ export default function OceanScreen() {
       lastTime = now;
       const t = delta / 50; // normalize: t=1 at original 50ms, t≈0.33 at 60fps
 
+      // Read ocean size once per tick — before any DOM writes, so no forced reflow
+      const oceanEl = oceanRef.current;
+      if (!oceanEl) { rafId = requestAnimationFrame(tick); return; }
+      const ow = oceanEl.offsetWidth;
+      const oh = oceanEl.offsetHeight;
+
       let fish = fishListRef.current.map((f) => moveFish(f, t));
       const currentShark = sharkRef.current;
 
@@ -434,7 +452,7 @@ export default function OceanScreen() {
 
         if (result.next) {
           if (sharkDomRef.current) {
-            sharkDomRef.current.style.transform = `translate(${result.next.x}vw, ${result.next.y}vh) scaleX(${-result.next.direction})`;
+            sharkDomRef.current.style.transform = `translate(${result.next.x / 100 * ow}px, ${result.next.y / 100 * oh}px) scaleX(${-result.next.direction})`;
           }
           if (result.next.mouthOpen !== prevMouthRef.current) {
             prevMouthRef.current = result.next.mouthOpen;
@@ -453,7 +471,8 @@ export default function OceanScreen() {
       for (const f of fish) {
         const el = fishDomRefs.current.get(f.id);
         if (el && !f.dragging) {
-          el.style.transform = `translate(${f.x}vw, ${f.y}vh)`;
+          el.style.left = `${f.x}%`;
+          el.style.top = `${f.y}%`;
           el.style.setProperty("--fish-direction", String(-f.direction));
         }
       }
@@ -515,7 +534,8 @@ export default function OceanScreen() {
               // fish (from fishList state) is a stale snapshot that only updates
               // when a fish is added/removed — NOT when direction changes mid-swim.
               const cur = fishListRef.current.find((f) => f.id === fish.id) ?? fish;
-              el.style.transform = `translate(${cur.x}vw, ${cur.y}vh)`;
+              el.style.left = `${cur.x}%`;
+              el.style.top = `${cur.y}%`;
               el.style.setProperty("--fish-direction", String(-cur.direction));
               el.style.setProperty(
                 "--fish-anim-duration",
@@ -544,7 +564,8 @@ export default function OceanScreen() {
           style={
             {
               width: `${SHARK_SIZE}px`,
-              transform: `translate(${shark.x}vw, ${shark.y}vh) scaleX(${-shark.direction})`,
+              // Initial position on first mount; rAF loop takes over immediately after
+              transform: `translate(${shark.x / 100 * window.innerWidth}px, ${shark.y / 100 * window.innerHeight}px) scaleX(${-shark.direction})`,
             } as CSSProperties
           }
         >
