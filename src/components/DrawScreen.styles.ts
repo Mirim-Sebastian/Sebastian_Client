@@ -176,11 +176,11 @@ export const TemplateButton = styled.button<{ $active: boolean }>`
   height: 38px;
   border-radius: 10px;
   background: ${({ $active }) =>
-    $active ? "rgba(56, 217, 169, 0.15)" : "rgba(255, 255, 255, 0.05)"};
+    $active ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.05)"};
   border: 1px solid
     ${({ $active }) =>
-      $active ? "rgba(56, 217, 169, 0.5)" : "rgba(255, 255, 255, 0.1)"};
-  color: ${({ $active }) => ($active ? "var(--accent)" : "rgba(230,240,255,0.6)")};
+      $active ? "rgba(255, 255, 255, 0.75)" : "rgba(255, 255, 255, 0.1)"};
+  color: ${({ $active }) => ($active ? "var(--ink)" : "rgba(230,240,255,0.6)")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,7 +192,7 @@ export const TemplateButton = styled.button<{ $active: boolean }>`
     height: 22px;
     object-fit: contain;
     filter: ${({ $active }) =>
-      $active ? "brightness(0) invert(0.9)" : "brightness(0) invert(0.5)"};
+      $active ? "brightness(0) invert(1)" : "brightness(0) invert(0.5)"};
     transition: filter 0.15s;
   }
 
@@ -201,6 +201,16 @@ export const TemplateButton = styled.button<{ $active: boolean }>`
     border-color: rgba(255, 255, 255, 0.22);
     img { filter: brightness(0) invert(0.85); }
   }
+
+  ${({ $active }) =>
+    $active &&
+    `
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.9);
+      img { filter: brightness(0) invert(1); }
+    }
+  `}
 `;
 
 // ─── Brush controls ───────────────────────────────────────────────────────────
