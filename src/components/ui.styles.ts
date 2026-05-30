@@ -92,6 +92,10 @@ export const IconButton = styled.button<{
     color: var(--bg);
     border-color: transparent;
     .tool-icon-img { filter: brightness(0); }
+    &:not(:disabled):hover {
+      background: rgba(220, 235, 255, 0.82);
+      border-color: transparent;
+    }
   `}
 
   ${({ $primary }) =>

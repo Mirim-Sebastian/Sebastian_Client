@@ -1,9 +1,13 @@
 import type { ReactNode } from "react"
+import boxfishUrl from "../assets/images/frame/boxfish.png"
 import goldfishUrl from "../assets/images/frame/goldfish.png"
 import hippocampusUrl from "../assets/images/frame/hippocampus.png"
+import jellyfishUrl from "../assets/images/frame/jellyfish.png"
 import nemoUrl from "../assets/images/frame/nemo.png"
 import octopusUrl from "../assets/images/frame/octopus.png"
 import sharkUrl from "../assets/images/frame/shark.png"
+import shrimpUrl from "../assets/images/frame/shrimp.png"
+import spinyfishUrl from "../assets/images/frame/spinyfish.png"
 
 export type FishTemplate = {
   id: string
@@ -36,5 +40,25 @@ export const FISH_TEMPLATES: FishTemplate[] = [
     id: "shark",
     icon: <img src={sharkUrl} alt="상어" />,
     imageUrl: sharkUrl,
+  },
+  {
+    id: "boxfish",
+    icon: <img src={boxfishUrl} alt="복어" />,
+    imageUrl: boxfishUrl,
+  },
+  {
+    id: "jellyfish",
+    icon: <img src={jellyfishUrl} alt="해파리" />,
+    imageUrl: jellyfishUrl,
+  },
+  {
+    id: "shrimp",
+    icon: <img src={shrimpUrl} alt="새우" />,
+    imageUrl: shrimpUrl,
+  },
+  {
+    id: "spinyfish",
+    icon: <img src={spinyfishUrl} alt="가시복어" />,
+    imageUrl: spinyfishUrl,
   },
 ]
