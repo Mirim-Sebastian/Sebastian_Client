@@ -1,4 +1,5 @@
 import {
+  type CSSProperties,
   useEffect,
   useRef,
   useState,
@@ -7,271 +8,280 @@ import {
 } from "react";
 import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
-import { NameScreen } from "./components/NameScreen";
+import { NameScreen, type FishSize } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
-import { FISH_TEMPLATES, type FishTemplate } from "./components/fishTemplates";
+import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
   BRUSH_MIN,
   COLORS,
   ERASER_SIZE_DEFAULT,
   MAX_NAME,
+  MAX_MESSAGE,
   MIN_NAME,
   PEN_SIZE_DEFAULT,
 } from "./constants";
-import "./App.css";
+import { AppWrapper, AppBubble, AppToast } from "./App.styles";
+import {
+  type DrawAction,
+  type EraseAction,
+  type StrokeAction,
+  cloneActions,
+  checkFishCoverage,
+  drawErase,
+  drawFill,
+  drawStroke,
+  isPointNearStroke,
+} from "./utils/canvas";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Step = "draw" | "name" | "sent";
 
+type Bubble = {
+  id: number;
+  left: number;
+  size: number;
+  duration: number;
+  delay: number;
+  peakOpacity: number;
+};
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const APP_BUBBLE_COUNT = 18;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function generateBubbles(): Bubble[] {
+  return Array.from({ length: APP_BUBBLE_COUNT }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    size: 3 + Math.random() * 12,
+    duration: 12 + Math.random() * 11,
+    delay: -(Math.random() * 15),
+    peakOpacity: 0.18 + Math.random() * 0.35,
+  }));
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 function App() {
-  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const frameCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const frameContextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const isDrawingRef = useRef(false);
-  const hasDrawingRef = useRef(false);
-  const framePathRef = useRef<Path2D | null>(null);
-  const historyRef = useRef<string[]>([]);
-  const redoHistoryRef = useRef<string[]>([]);
-  const selectedTemplateRef = useRef(FISH_TEMPLATES[0]);
-  const socketRef = useRef<WebSocket | null>(null);
+  // Canvas refs
+  const drawCanvasRef     = useRef<HTMLCanvasElement | null>(null);
+  const frameCanvasRef    = useRef<HTMLCanvasElement | null>(null);
+  const strokesCanvasRef  = useRef<HTMLCanvasElement | null>(null);
+  const contextRef        = useRef<CanvasRenderingContext2D | null>(null);
+  const frameContextRef   = useRef<CanvasRenderingContext2D | null>(null);
+  const strokesContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const templateImageRef  = useRef<HTMLImageElement | null>(null);
 
-  const [step, setStep] = useState<Step>("draw");
-  const [tool, setTool] = useState<"pen" | "eraser" | "fill">("pen");
-  const [color, setColor] = useState(COLORS[0].value);
+  // Drawing state refs
+  const isDrawingRef     = useRef(false);
+  const isErasingRef     = useRef(false);
+  const hasDrawingRef    = useRef(false);
+  const actionsRef       = useRef<DrawAction[]>([]);
+  const currentStrokeRef = useRef<StrokeAction | null>(null);
+  const currentEraseRef  = useRef<EraseAction | null>(null);
+  const historyRef       = useRef<DrawAction[][]>([[]]);
+  const redoHistoryRef   = useRef<DrawAction[][]>([]);
+
+  // UI state
+  const [step, setStep]               = useState<Step>("draw");
+  const [tool, setTool]               = useState<"pen" | "eraser" | "fill">("pen");
+  const [eraserMode, setEraserMode]   = useState<"stroke" | "brush">("stroke");
+  const [color, setColor]             = useState(COLORS[0].value);
   const [customColor, setCustomColor] = useState(COLORS[0].value);
-  const [penSize, setPenSize] = useState(PEN_SIZE_DEFAULT);
-  const [eraserSize, setEraserSize] = useState(ERASER_SIZE_DEFAULT);
-  const [hasDrawing, setHasDrawing] = useState(false);
-  const [draftImage, setDraftImage] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [penSize, setPenSize]         = useState(PEN_SIZE_DEFAULT);
+  const [eraserSize, setEraserSize]   = useState(ERASER_SIZE_DEFAULT);
+  const [hasDrawing, setHasDrawing]   = useState(false);
+  const [draftImage, setDraftImage]   = useState<string | null>(null);
+  const [name, setName]               = useState("");
+  const [message, setMessage]         = useState("");
+  const [fishSize, setFishSize]       = useState<FishSize>("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [drawError, setDrawError] = useState(false);
-  const [nameError, setNameError] = useState(false);
+  const [drawError, setDrawError]     = useState(false);
+  const [canvasHint, setCanvasHint]   = useState<string | null>(null);
+  const [nameError, setNameError]     = useState(false);
+  const [messageError, setMessageError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(
-    FISH_TEMPLATES[0].id,
-  );
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(FISH_TEMPLATES[0].id);
+  const [canUndo, setCanUndo]         = useState(false);
+  const [canRedo, setCanRedo]         = useState(false);
+  const [bubbles]                     = useState<Bubble[]>(generateBubbles);
 
-  const selectedTemplate =
-    FISH_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
-    FISH_TEMPLATES[0];
+  useEffect(() => { hasDrawingRef.current = hasDrawing; }, [hasDrawing]);
 
-  useEffect(() => {
-    hasDrawingRef.current = hasDrawing;
-  }, [hasDrawing]);
-
-  useEffect(() => {
-    selectedTemplateRef.current = selectedTemplate;
-  }, [selectedTemplate]);
-
-  const getTemplateSize = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-  ) => {
-    const { bounds } = template;
-    const maxByWidth = width / bounds.width;
-    const maxByHeight = height / bounds.height;
-    return Math.min(maxByWidth, maxByHeight) * 0.8;
-  };
-
-  const buildTemplatePath = (
-    template: FishTemplate,
-    width: number,
-    height: number,
-    size: number,
-  ) => {
-    const centerX = width / 2 + template.bounds.centerOffsetX * size;
-    return template.createPath(centerX, height / 2, size);
-  };
+  // ─── Canvas helpers ──────────────────────────────────────────────────────────
 
   const updateFrame = (width?: number, height?: number) => {
     const frameCanvas = frameCanvasRef.current;
-    const frameCtx = frameContextRef.current;
-    const drawCanvas = drawCanvasRef.current;
+    const frameCtx    = frameContextRef.current;
+    const drawCanvas  = drawCanvasRef.current;
     if (!frameCanvas || !frameCtx || !drawCanvas) return;
     const rect = drawCanvas.getBoundingClientRect();
-    const frameWidth = width ?? rect.width;
-    const frameHeight = height ?? rect.height;
-    const template = selectedTemplateRef.current;
-    const baseSize = getTemplateSize(template, frameWidth, frameHeight);
-    const fishHeight = baseSize * template.bounds.height;
-    const frameLine = Math.max(1.5, Math.min(3.5, fishHeight * 0.01));
-    const path = buildTemplatePath(template, frameWidth, frameHeight, baseSize);
-    const frameInset = frameLine * 2;
-    const frameSize = Math.max(0, baseSize - frameInset);
-    const framePath = buildTemplatePath(
-      template,
-      frameWidth,
-      frameHeight,
-      frameSize,
-    );
-    framePathRef.current = framePath;
-    frameCtx.clearRect(0, 0, frameWidth, frameHeight);
-    frameCtx.strokeStyle = "rgba(230, 240, 255, 0.75)";
-    frameCtx.lineWidth = frameLine;
-    frameCtx.lineJoin = "round";
-    frameCtx.lineCap = "round";
-    frameCtx.save();
-    frameCtx.stroke(path);
-    frameCtx.globalCompositeOperation = "destination-in";
-    frameCtx.fill(path);
-    frameCtx.restore();
+    const w = width ?? rect.width;
+    const h = height ?? rect.height;
+    const img = templateImageRef.current;
+    frameCtx.clearRect(0, 0, w, h);
+    if (!img?.complete || !img.naturalWidth) return;
+    const scale = Math.min((w * 0.85) / img.naturalWidth, (h * 0.85) / img.naturalHeight);
+    const dw = img.naturalWidth * scale;
+    const dh = img.naturalHeight * scale;
+    frameCtx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
   };
 
-  useEffect(() => {
-    const drawCanvas = drawCanvasRef.current;
-    const frameCanvas = frameCanvasRef.current;
-    if (!drawCanvas || !frameCanvas) return;
-    const drawCtx = drawCanvas.getContext("2d");
-    const frameCtx = frameCanvas.getContext("2d");
-    if (!drawCtx || !frameCtx) return;
-    contextRef.current = drawCtx;
-    frameContextRef.current = frameCtx;
-
-    const resizeCanvas = () => {
-      const { width, height } = drawCanvas.getBoundingClientRect();
-      if (!width || !height) return;
-      const ratio = window.devicePixelRatio || 1;
-      const snapshot = hasDrawingRef.current
-        ? drawCanvas.toDataURL("image/png")
-        : null;
-      drawCanvas.width = Math.round(width * ratio);
-      drawCanvas.height = Math.round(height * ratio);
-      frameCanvas.width = Math.round(width * ratio);
-      frameCanvas.height = Math.round(height * ratio);
-      drawCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      frameCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      drawCtx.lineCap = "round";
-      drawCtx.lineJoin = "round";
-      if (snapshot) {
-        const img = new Image();
-        img.onload = () => {
-          drawCtx.drawImage(img, 0, 0, width, height);
-        };
-        img.src = snapshot;
+  const redrawCanvas = (actions: DrawAction[]) => {
+    const canvas     = drawCanvasRef.current;
+    const ctx        = contextRef.current;
+    const frameCtx   = frameContextRef.current;
+    const strokesCtx = strokesContextRef.current;
+    if (!canvas || !ctx || !frameCtx || !strokesCtx) return;
+    const { width, height } = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokesCtx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const action of actions) {
+      if (action.type === "fill") {
+        drawFill(ctx, action, frameCtx, strokesCtx);
+      } else if (action.type === "erase") {
+        drawErase(ctx, action, width, height);
+        drawErase(strokesCtx, action, width, height);
+      } else {
+        drawStroke(ctx, action, width, height);
+        drawStroke(strokesCtx, action, width, height);
       }
-      updateFrame(width, height);
-    };
-
-    const observer = new ResizeObserver(resizeCanvas);
-    observer.observe(drawCanvas);
-    resizeCanvas();
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    window.requestAnimationFrame(() => updateFrame());
-  }, [selectedTemplateId]);
-
-  const getPoint = (event: PointerEvent<HTMLCanvasElement>) => {
-    const canvas = drawCanvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  };
-
-  useEffect(() => {
-    socketRef.current = new WebSocket("ws://localhost:8000");
-
-    socketRef.current.onopen = () => {
-      console.log("✅연결됨");
-    };
-
-    return () => {
-      socketRef.current?.close();
-    };
-  }, []);
-
-  const applyTool = (ctx: CanvasRenderingContext2D) => {
-    const size = tool === "eraser" ? eraserSize : penSize;
-    if (tool === "eraser") {
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.lineWidth = size;
-    } else {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = color;
-      ctx.lineWidth = size;
     }
   };
 
-  const pushHistory = (dataUrl: string) => {
-    historyRef.current.push(dataUrl);
+  const setActions = (actions: DrawAction[]) => {
+    actionsRef.current = actions;
+    setHasDrawing(actions.length > 0);
+    redrawCanvas(actions);
+  };
+
+  const commitActions = (actions: DrawAction[]) => {
+    const next = cloneActions(actions);
+    setActions(next);
+    setCanvasHint(null);
+    historyRef.current.push(cloneActions(next));
     redoHistoryRef.current = [];
-    setCanUndo(historyRef.current.length > 0);
+    setCanUndo(historyRef.current.length > 1);
     setCanRedo(false);
   };
 
-  const restoreFromSnapshot = (dataUrl?: string) => {
-    const canvas = drawCanvasRef.current;
-    const ctx = contextRef.current;
-    if (!canvas || !ctx) return;
-    const { width, height } = canvas.getBoundingClientRect();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!dataUrl) {
-      setHasDrawing(false);
-      return;
-    }
-    const img = new Image();
-    img.onload = () => {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.drawImage(img, 0, 0, width, height);
-    };
-    img.src = dataUrl;
-    setHasDrawing(true);
-  };
-
   const resetDrawing = () => {
-    restoreFromSnapshot();
-    historyRef.current = [];
+    currentStrokeRef.current = null;
+    setActions([]);
+    historyRef.current = [[]];
     redoHistoryRef.current = [];
     setCanUndo(false);
     setCanRedo(false);
     setDrawError(false);
   };
 
-  const flashError = (setter: (value: boolean) => void) => {
+  const flashError = (setter: (v: boolean) => void) => {
     setter(true);
     window.setTimeout(() => setter(false), 600);
   };
 
-  const handleFill = () => {
+  // ─── Pointer helpers ─────────────────────────────────────────────────────────
+
+  const getPoint = (e: PointerEvent<HTMLCanvasElement>) => {
     const canvas = drawCanvasRef.current;
-    const ctx = contextRef.current;
-    const fillPath = framePathRef.current;
-    if (!canvas || !ctx || !fillPath) return;
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = color;
-    ctx.fill(fillPath);
-    ctx.restore();
-    setHasDrawing(true);
-    const snapshot = canvas.toDataURL("image/png");
-    pushHistory(snapshot);
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+  const getRelativePoint = (e: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = drawCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return { x: 0, y: 0 };
+    return { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+  };
+
+  const findActionIndexAtPoint = (x: number, y: number): number => {
+    const canvas   = drawCanvasRef.current;
+    const ctx      = contextRef.current;
+    const frameCtx = frameContextRef.current;
+    if (!canvas || !ctx) return -1;
+    const { width, height } = canvas.getBoundingClientRect();
+    let lastFillIndex = -1;
+
+    const isInsideFillShape = (() => {
+      if (!frameCtx) return false;
+      const ratio = window.devicePixelRatio || 1;
+      try {
+        const pixel = frameCtx.getImageData(Math.round(x * ratio), Math.round(y * ratio), 1, 1);
+        return pixel.data[3] > 10;
+      } catch { return false; }
+    })();
+
+    for (let i = actionsRef.current.length - 1; i >= 0; i--) {
+      const action = actionsRef.current[i];
+      if (action.type === "fill") {
+        if (isInsideFillShape && lastFillIndex === -1) lastFillIndex = i;
+        continue;
+      }
+      if (action.type === "erase") continue;
+      const threshold = Math.max(action.size * 0.5 + 6, eraserSize * 0.7);
+      if (isPointNearStroke({ x, y }, action, width, height, threshold)) return i;
+    }
+    return lastFillIndex;
+  };
+
+  // ─── Draw event handlers ─────────────────────────────────────────────────────
+
+  const handleEraseAction = (e: PointerEvent<HTMLCanvasElement>) => {
+    if (eraserMode !== "stroke") return;
+    const { x, y } = getPoint(e);
+    const idx = findActionIndexAtPoint(x, y);
+    if (idx < 0) return;
+    commitActions(actionsRef.current.filter((_, i) => i !== idx));
+  };
+
+  const handlePointerDown = (e: PointerEvent<HTMLCanvasElement>) => {
     if (step !== "draw") return;
     if (tool === "fill") {
-      handleFill();
+      const { x, y } = getRelativePoint(e);
+      commitActions([...actionsRef.current, { type: "fill", color, x, y }]);
       return;
     }
     const canvas = drawCanvasRef.current;
-    const ctx = contextRef.current;
+    const ctx    = contextRef.current;
     if (!canvas || !ctx) return;
-    const { x, y } = getPoint(event);
+
+    if (tool === "eraser") {
+      isErasingRef.current = true;
+      canvas.setPointerCapture(e.pointerId);
+      if (eraserMode === "brush") {
+        const { x, y } = getPoint(e);
+        currentEraseRef.current = { type: "erase", size: eraserSize, points: [getRelativePoint(e)] };
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineWidth = eraserSize;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 0.1, y + 0.1);
+        ctx.stroke();
+        setHasDrawing(true);
+      } else {
+        handleEraseAction(e);
+      }
+      return;
+    }
+
+    const { x, y } = getPoint(e);
+    currentStrokeRef.current = { type: "stroke", color, size: penSize, points: [getRelativePoint(e)] };
     isDrawingRef.current = true;
-    canvas.setPointerCapture(event.pointerId);
-    applyTool(ctx);
+    canvas.setPointerCapture(e.pointerId);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = penSize;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + 0.1, y + 0.1);
@@ -279,64 +289,159 @@ function App() {
     setHasDrawing(true);
   };
 
-  const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+  const handlePointerMove = (e: PointerEvent<HTMLCanvasElement>) => {
+    if (isErasingRef.current) {
+      if (eraserMode === "brush") {
+        const ctx = contextRef.current;
+        if (!ctx) return;
+        const { x, y } = getPoint(e);
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineWidth = eraserSize;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        currentEraseRef.current?.points.push(getRelativePoint(e));
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      } else {
+        handleEraseAction(e);
+      }
+      return;
+    }
     if (!isDrawingRef.current) return;
     const ctx = contextRef.current;
     if (!ctx) return;
-    const { x, y } = getPoint(event);
+    const { x, y } = getPoint(e);
+    currentStrokeRef.current?.points.push(getRelativePoint(e));
     ctx.lineTo(x, y);
     ctx.stroke();
   };
 
-  const handlePointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
+  const handlePointerUp = (e: PointerEvent<HTMLCanvasElement>) => {
     const canvas = drawCanvasRef.current;
-    const ctx = contextRef.current;
-    if (!canvas || !ctx) return;
-    if (!isDrawingRef.current) return;
+    const ctx    = contextRef.current;
+    if (!canvas) return;
+
+    if (isErasingRef.current) {
+      isErasingRef.current = false;
+      if (eraserMode === "brush" && currentEraseRef.current) {
+        if (ctx) { ctx.closePath(); ctx.globalCompositeOperation = "source-over"; }
+        commitActions([...actionsRef.current, currentEraseRef.current]);
+        currentEraseRef.current = null;
+      }
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      return;
+    }
+
+    if (!ctx || !isDrawingRef.current) return;
     isDrawingRef.current = false;
     ctx.closePath();
-    if (canvas.hasPointerCapture(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId);
+    if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+    if (currentStrokeRef.current) {
+      commitActions([...actionsRef.current, currentStrokeRef.current]);
+      currentStrokeRef.current = null;
     }
-    const snapshot = canvas.toDataURL("image/png");
-    pushHistory(snapshot);
   };
 
-  const exportImage = () => {
+  // ─── History ─────────────────────────────────────────────────────────────────
+
+  const handleUndo = () => {
+    if (historyRef.current.length <= 1) return;
+    const current = historyRef.current.pop();
+    if (current) redoHistoryRef.current.push(cloneActions(current));
+    const prev = historyRef.current[historyRef.current.length - 1] ?? [];
+    setActions(cloneActions(prev));
+    setCanUndo(historyRef.current.length > 1);
+    setCanRedo(redoHistoryRef.current.length > 0);
+  };
+
+  const handleRedo = () => {
+    if (!canRedo) return;
+    const next = redoHistoryRef.current.pop();
+    if (!next) return;
+    const restored = cloneActions(next);
+    historyRef.current.push(cloneActions(restored));
+    setActions(restored);
+    setCanUndo(historyRef.current.length > 1);
+    setCanRedo(redoHistoryRef.current.length > 0);
+  };
+
+  // ─── Navigation & submission ──────────────────────────────────────────────────
+
+  const exportImage = (): string | null => {
     const canvas = drawCanvasRef.current;
     if (!canvas) return null;
-
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
     const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = canvas.width;
-    exportCanvas.height = canvas.height;
-    const exportCtx = exportCanvas.getContext("2d");
-    if (!exportCtx) return null;
-
-    // 사용자가 그린 선(drawCanvas)만
-    exportCtx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
-
-    return exportCanvas.toDataURL("image/png");
+    exportCanvas.width  = w;
+    exportCanvas.height = h;
+    const ctx = exportCanvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(canvas, 0, 0, w, h);
+    const webp = exportCanvas.toDataURL("image/webp", 0.85);
+    return webp.startsWith("data:image/webp") ? webp : exportCanvas.toDataURL("image/png");
   };
 
   const handleCompleteDrawing = () => {
-    console.log("🔥 hasDrawing:", hasDrawing);
-    if (!hasDrawing) {
+    if (actionsRef.current.length === 0) {
       flashError(setDrawError);
+      setCanvasHint("물고기를 그려주세요");
+      return;
+    }
+    const canvas   = drawCanvasRef.current;
+    const ctx      = contextRef.current;
+    const frameCtx = frameContextRef.current;
+    if (canvas && ctx && frameCtx && checkFishCoverage(canvas, ctx, frameCtx) < 0.5) {
+      flashError(setDrawError);
+      setCanvasHint("그림틀의 50% 이상을 채워주세요");
       return;
     }
     const image = exportImage();
-    if (!image) {
-      flashError(setDrawError);
-      return;
-    }
+    if (!image) { flashError(setDrawError); return; }
+    setCanvasHint(null);
     setDraftImage(image);
     setStep("name");
   };
 
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.slice(0, MAX_NAME);
-    setName(value);
+  const handleSubmit = async () => {
+    if (!draftImage) { setStep("draw"); return; }
+    const nameLen = name.trim().length;
+    if (!(nameLen >= MIN_NAME && nameLen <= MAX_NAME) || !message.trim()) {
+      if (!(nameLen >= MIN_NAME && nameLen <= MAX_NAME)) flashError(setNameError);
+      if (!message.trim()) flashError(setMessageError);
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError(false);
+    try {
+      await postFish({ name: name.trim(), image: draftImage, message: message.trim(), size: fishSize });
+      setStep("sent");
+    } catch {
+      setSubmitError(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSentDone = () => {
+    setStep("draw");
+    setName(""); setMessage(""); setFishSize("medium"); setDraftImage(null);
+    resetDrawing();
+    setNameError(false); setMessageError(false); setSubmitError(false);
+  };
+
+  // ─── Field handlers ───────────────────────────────────────────────────────────
+
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value.slice(0, MAX_NAME));
     setNameError(false);
+    setSubmitError(false);
+  };
+
+  const handleMessageChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value.slice(0, MAX_MESSAGE));
+    setMessageError(false);
     setSubmitError(false);
   };
 
@@ -348,78 +453,95 @@ function App() {
   };
 
   const handleBrushSizeChange = (value: number) => {
-    if (tool === "eraser") {
-      setEraserSize(value);
-    } else if (tool === "pen") {
-      setPenSize(value);
-    }
+    if (tool === "eraser") setEraserSize(value);
+    else if (tool === "pen") setPenSize(value);
   };
 
-  const handleUndo = () => {
-    if (!canUndo) return;
-    const current = historyRef.current.pop();
-    if (current) {
-      redoHistoryRef.current.push(current);
-    }
-    const previous = historyRef.current[historyRef.current.length - 1];
-    restoreFromSnapshot(previous);
-    setCanUndo(historyRef.current.length > 0);
-    setCanRedo(redoHistoryRef.current.length > 0);
+  const handleColorChange = (value: string) => {
+    setColor(value);
+    setCustomColor(value);
+    if (tool === "eraser") setTool("pen");
   };
 
-  const handleRedo = () => {
-    if (!canRedo) return;
-    const next = redoHistoryRef.current.pop();
-    if (!next) return;
-    historyRef.current.push(next);
-    restoreFromSnapshot(next);
-    setCanUndo(historyRef.current.length > 0);
-    setCanRedo(redoHistoryRef.current.length > 0);
-  };
+  // ─── Effects ─────────────────────────────────────────────────────────────────
 
-  const nameLength = name.trim().length;
-  const isNameValid = nameLength >= MIN_NAME && nameLength <= MAX_NAME;
+  useEffect(() => {
+    const drawCanvas  = drawCanvasRef.current;
+    const frameCanvas = frameCanvasRef.current;
+    if (!drawCanvas || !frameCanvas) return;
+    const drawCtx  = drawCanvas.getContext("2d");
+    const frameCtx = frameCanvas.getContext("2d");
+    if (!drawCtx || !frameCtx) return;
+    contextRef.current = drawCtx;
+    frameContextRef.current = frameCtx;
 
-  const handleSubmit = async () => {
-    if (!draftImage) {
-      setStep("draw");
-      return;
-    }
+    // Off-screen canvas holds only strokes/erases (no fills)
+    // so that subsequent fills in the same region work correctly
+    const strokesCanvas = document.createElement("canvas");
+    const strokesCtx = strokesCanvas.getContext("2d");
+    if (!strokesCtx) return;
+    strokesCanvasRef.current = strokesCanvas;
+    strokesContextRef.current = strokesCtx;
 
-    if (!isNameValid) {
-      flashError(setNameError);
-      return;
-    }
+    const resizeCanvas = () => {
+      const { width, height } = drawCanvas.getBoundingClientRect();
+      if (!width || !height) return;
+      const ratio = window.devicePixelRatio || 1;
+      for (const [c, ctx] of [
+        [drawCanvas, drawCtx] as const,
+        [frameCanvas, frameCtx] as const,
+        [strokesCanvas, strokesCtx] as const,
+      ]) {
+        c.width  = Math.round(width * ratio);
+        c.height = Math.round(height * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+      drawCtx.lineCap = "round";
+      drawCtx.lineJoin = "round";
+      updateFrame(width, height);
+      redrawCanvas(actionsRef.current);
+    };
 
-    setIsSubmitting(true);
-    setSubmitError(false);
+    const observer = new ResizeObserver(resizeCanvas);
+    observer.observe(drawCanvas);
+    resizeCanvas();
+    return () => observer.disconnect();
+  }, []);
 
-    try {
-      const savedFish = await postFish({
-        name: name.trim(),
-        image: draftImage,
-      });
+  useEffect(() => {
+    const template = FISH_TEMPLATES.find((t) => t.id === selectedTemplateId) ?? FISH_TEMPLATES[0];
+    const img = new Image();
+    img.onload = () => {
+      templateImageRef.current = img;
+      window.requestAnimationFrame(() => { updateFrame(); redrawCanvas(actionsRef.current); });
+    };
+    img.src = template.imageUrl;
+  }, [selectedTemplateId]);
 
-      socketRef.current?.send(
-        JSON.stringify({
-          type: "NEW_FISH",
-          data: savedFish,
-        })
-      );
-
-      setStep("sent");
-    } catch (error) {
-      setSubmitError(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="app">
-      {step === "draw" && (
+    <AppWrapper>
+      {bubbles.map((b) => (
+        <AppBubble
+          key={b.id}
+          style={{
+            left: `${b.left}%`,
+            width: `${b.size}px`,
+            height: `${b.size}px`,
+            animationDuration: `${b.duration}s`,
+            animationDelay: `${b.delay}s`,
+            "--bubble-peak": b.peakOpacity,
+          } as CSSProperties}
+        />
+      ))}
+
+      {canvasHint && <AppToast>{canvasHint}</AppToast>}
+
+      <div style={{ display: step === "draw" ? "flex" : "none", width: "100%", justifyContent: "center" }}>
         <DrawScreen
           tool={tool}
+          eraserMode={eraserMode}
           color={color}
           colors={COLORS}
           customColor={customColor}
@@ -434,20 +556,9 @@ function App() {
           onUndo={handleUndo}
           onRedo={handleRedo}
           onToolChange={setTool}
-          onColorChange={(value) => {
-            setColor(value);
-            setCustomColor(value);
-            if (tool === "eraser") {
-              setTool("pen");
-            }
-          }}
-          onCustomColorChange={(value) => {
-            setCustomColor(value);
-            setColor(value);
-            if (tool === "eraser") {
-              setTool("pen");
-            }
-          }}
+          onEraserModeChange={setEraserMode}
+          onColorChange={handleColorChange}
+          onCustomColorChange={handleColorChange}
           onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}
           onComplete={handleCompleteDrawing}
@@ -457,22 +568,28 @@ function App() {
           drawCanvasRef={drawCanvasRef}
           frameCanvasRef={frameCanvasRef}
         />
-      )}
+      </div>
 
       {step === "name" && (
         <NameScreen
           draftImage={draftImage}
           name={name}
+          message={message}
+          fishSize={fishSize}
           nameError={nameError}
+          messageError={messageError}
           submitError={submitError}
           isSubmitting={isSubmitting}
           onNameChange={handleNameChange}
+          onMessageChange={handleMessageChange}
+          onFishSizeChange={setFishSize}
+          onBack={() => setStep("draw")}
           onSubmit={handleSubmit}
         />
       )}
 
-      {step === "sent" && <SentScreen />}
-    </div>
+      {step === "sent" && <SentScreen onDone={handleSentDone} />}
+    </AppWrapper>
   );
 }
 
