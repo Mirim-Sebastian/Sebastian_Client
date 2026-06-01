@@ -6,6 +6,7 @@ import {
   type ChangeEvent,
   type PointerEvent,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
 import { NameScreen, type FishSize } from "./components/NameScreen";
@@ -547,61 +548,92 @@ function App() {
 
       {canvasHint && <AppToast>{canvasHint}</AppToast>}
 
-      <BrandBar step={step} />
+      {step !== "sent" && <BrandBar step={step} />}
 
-      <div style={{ display: step === "draw" ? "flex" : "none", width: "100%", justifyContent: "center" }}>
-        <DrawScreen
-          tool={tool}
-          eraserMode={eraserMode}
-          color={color}
-          colors={COLORS}
-          customColor={customColor}
-          templates={FISH_TEMPLATES}
-          selectedTemplateId={selectedTemplateId}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          drawError={drawError}
-          brushSize={tool === "eraser" ? eraserSize : penSize}
-          brushMin={BRUSH_MIN}
-          brushMax={BRUSH_MAX}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onToolChange={setTool}
-          onEraserModeChange={setEraserMode}
-          colorSource={colorSource}
-          onColorChange={handleColorChange}
-          onCustomColorChange={handleCustomColorChange}
-          onBrushSizeChange={handleBrushSizeChange}
-          onSelectTemplate={handleTemplateSelect}
-          onReset={resetDrawing}
-          onComplete={handleCompleteDrawing}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          drawCanvasRef={drawCanvasRef}
-          frameCanvasRef={frameCanvasRef}
-        />
+      <div style={{ position: "relative", width: "100%", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* DrawScreen 항상 마운트 유지 (캔버스 보존) */}
+        <motion.div
+          style={{ position: "absolute", width: "100%", display: "flex", justifyContent: "center" }}
+          animate={{
+            opacity: step === "draw" ? 1 : 0,
+            pointerEvents: step === "draw" ? "auto" : "none",
+          }}
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+        >
+          <DrawScreen
+            tool={tool}
+            eraserMode={eraserMode}
+            color={color}
+            colors={COLORS}
+            customColor={customColor}
+            templates={FISH_TEMPLATES}
+            selectedTemplateId={selectedTemplateId}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            drawError={drawError}
+            brushSize={tool === "eraser" ? eraserSize : penSize}
+            brushMin={BRUSH_MIN}
+            brushMax={BRUSH_MAX}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onToolChange={setTool}
+            onEraserModeChange={setEraserMode}
+            colorSource={colorSource}
+            onColorChange={handleColorChange}
+            onCustomColorChange={handleCustomColorChange}
+            onBrushSizeChange={handleBrushSizeChange}
+            onSelectTemplate={handleTemplateSelect}
+            onReset={resetDrawing}
+            onComplete={handleCompleteDrawing}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            drawCanvasRef={drawCanvasRef}
+            frameCanvasRef={frameCanvasRef}
+          />
+        </motion.div>
+
+        <AnimatePresence mode="wait">
+          {step === "name" && (
+            <motion.div
+              key="name"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              style={{ position: "absolute", width: "100%", display: "flex", justifyContent: "center" }}
+            >
+              <NameScreen
+                draftImage={draftImage}
+                name={name}
+                message={message}
+                fishSize={fishSize}
+                nameError={nameError}
+                messageError={messageError}
+                submitError={submitError}
+                isSubmitting={isSubmitting}
+                onNameChange={handleNameChange}
+                onMessageChange={handleMessageChange}
+                onFishSizeChange={setFishSize}
+                onBack={() => setStep("draw")}
+                onSubmit={handleSubmit}
+              />
+            </motion.div>
+          )}
+          {step === "sent" && (
+            <motion.div
+              key="sent"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              style={{ position: "absolute", width: "100%", display: "flex", justifyContent: "center" }}
+            >
+              <SentScreen onDone={handleSentDone} draftImage={draftImage} name={name} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {step === "name" && (
-        <NameScreen
-          draftImage={draftImage}
-          name={name}
-          message={message}
-          fishSize={fishSize}
-          nameError={nameError}
-          messageError={messageError}
-          submitError={submitError}
-          isSubmitting={isSubmitting}
-          onNameChange={handleNameChange}
-          onMessageChange={handleMessageChange}
-          onFishSizeChange={setFishSize}
-          onBack={() => setStep("draw")}
-          onSubmit={handleSubmit}
-        />
-      )}
-
-      {step === "sent" && <SentScreen onDone={handleSentDone} draftImage={draftImage} name={name} />}
     </AppWrapper>
   );
 }

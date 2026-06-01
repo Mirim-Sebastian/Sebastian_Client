@@ -76,7 +76,7 @@ export const NameScreen = ({
     {/* 명패 (우측) */}
     <Placard>
       <Rule />
-      <Title>이름을 지어주세요</Title>
+      <Title>바다를 헤엄칠 준비를 해볼까요?</Title>
       <Rows>
         <Row $error={nameError}>
           <Label htmlFor="fish-name">이름</Label>
