@@ -1,8 +1,6 @@
 import styled from "styled-components";
 
 const BLUE = "#4aa3ff";
-const BLUE_RGB = "74, 163, 255";
-const ON_BLUE = "#04162e";
 
 export const Bar = styled.header`
   width: min(1200px, 100%);
@@ -79,16 +77,16 @@ export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
     ${({ $state }) =>
       $state === "on" &&
       `
-      border-color: ${BLUE};
-      color: ${BLUE};
-      box-shadow: 0 0 0 4px rgba(${BLUE_RGB}, 0.12);
+      border-color: #ffffff;
+      color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
     `}
     ${({ $state }) =>
       $state === "done" &&
       `
-      background: ${BLUE};
-      border-color: ${BLUE};
-      color: ${ON_BLUE};
+      background: rgba(255, 255, 255, 0.9);
+      border-color: #ffffff;
+      color: #04162e;
     `}
   }
 

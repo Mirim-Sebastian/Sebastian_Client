@@ -5,9 +5,7 @@ export { IconButton } from "./ui.styles";
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
 const BLUE = "#4aa3ff";
-const BLUE_DEEP = "#2f7fe0";
 const BLUE_RGB = "74, 163, 255";
-const ON_BLUE = "#04162e";
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 const floaty = keyframes`
@@ -248,8 +246,8 @@ export const SendButton = styled.button<{ $error?: boolean }>`
   height: 56px;
   border-radius: 15px;
   border: none;
-  background: linear-gradient(180deg, ${BLUE}, ${BLUE_DEEP});
-  color: ${ON_BLUE};
+  background: rgba(255, 255, 255, 0.92);
+  color: #04162e;
   font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -258,9 +256,7 @@ export const SendButton = styled.button<{ $error?: boolean }>`
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  box-shadow:
-    0 14px 30px rgba(${BLUE_RGB}, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
   transition: transform 0.12s, box-shadow 0.2s;
   animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
 
@@ -278,7 +274,8 @@ export const SendButton = styled.button<{ $error?: boolean }>`
   }
   &:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 18px 38px rgba(${BLUE_RGB}, 0.36);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.25);
+    background: #ffffff;
   }
   &:disabled {
     opacity: 0.7;

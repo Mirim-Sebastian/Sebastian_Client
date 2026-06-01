@@ -28,7 +28,6 @@ import {
   PaletteGroup,
   RailCard,
   RailSpacer,
-  RailTitle,
   Screen,
   SizeDot,
   SizePreview,
@@ -129,7 +128,6 @@ export const DrawScreen = ({
       {/* 우측 — 도구 레일 */}
       <Controls role="toolbar">
         <RailCard>
-          <RailTitle>도구</RailTitle>
           <ToolRow>
             <IconButton type="button" onClick={onUndo} disabled={!canUndo} aria-label="되돌리기">
               <UndoIcon />
@@ -153,7 +151,6 @@ export const DrawScreen = ({
         </RailCard>
 
         <RailCard>
-          <RailTitle>색상</RailTitle>
           <PaletteGroup>
             {colors.map((swatch) => (
               <ColorDot
@@ -177,7 +174,6 @@ export const DrawScreen = ({
         </RailCard>
 
         <RailCard>
-          <RailTitle>{isFill ? "채우기" : isEraser ? "지우개" : "굵기"}</RailTitle>
           <BrushGroup>
             <BrushTrack>
               <BrushRange
@@ -215,7 +211,6 @@ export const DrawScreen = ({
         </RailCard>
 
         <RailCard>
-          <RailTitle>물고기 틀</RailTitle>
           <TemplatesGroup>
             {templates.map((template) => (
               <TemplateButton

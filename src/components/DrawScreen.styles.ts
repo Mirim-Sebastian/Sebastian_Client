@@ -5,9 +5,7 @@ export { IconButton };
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
 const BLUE = "#4aa3ff";
-const BLUE_DEEP = "#2f7fe0";
 const BLUE_RGB = "74, 163, 255";
-const ON_BLUE = "#04162e";
 
 // ─── Layout : 좌(수조 캔버스) · 우(도구 레일) ───────────────────────────────────
 export const Screen = styled(BaseScreen)`
@@ -341,8 +339,8 @@ export const CompleteButton = styled.button`
   height: 48px;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(180deg, ${BLUE}, ${BLUE_DEEP});
-  color: ${ON_BLUE};
+  background: rgba(255, 255, 255, 0.92);
+  color: #04162e;
   font-size: 0.92rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -351,9 +349,7 @@ export const CompleteButton = styled.button`
   justify-content: center;
   gap: 7px;
   cursor: pointer;
-  box-shadow:
-    0 14px 30px rgba(${BLUE_RGB}, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
   transition:
     transform 0.12s,
     box-shadow 0.2s;
@@ -371,7 +367,8 @@ export const CompleteButton = styled.button`
   }
   &:not(:disabled):hover {
     transform: translateY(-2px);
-    box-shadow: 0 18px 38px rgba(${BLUE_RGB}, 0.36);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.25);
+    background: #ffffff;
   }
   &:active {
     transform: translateY(0);

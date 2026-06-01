@@ -3,7 +3,6 @@ import {
   Brand,
   BrandMark,
   BrandName,
-  BrandSub,
   StepDot,
   StepLine,
   Stepper,
@@ -44,7 +43,6 @@ export const BrandBar = ({ step }: BrandBarProps) => {
           <WaveMark />
         </BrandMark>
         <BrandName>SEBASTIAN</BrandName>
-        <BrandSub>나만의 물고기</BrandSub>
       </Brand>
 
       <Stepper>
