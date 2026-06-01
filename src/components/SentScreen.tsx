@@ -47,7 +47,7 @@ export const SentScreen = ({ onDone, draftImage, name }: SentScreenProps) => {
 
       <SentMessage>
         <TitleMain>
-          {name ? `"${name}"을(를)` : "물고기를"} 방금 바다로 보냈어요
+          {name ? `${name}을(를)` : "물고기를"} 방금 바다로 보냈어요
         </TitleMain>
       </SentMessage>
 
@@ -57,7 +57,14 @@ export const SentScreen = ({ onDone, draftImage, name }: SentScreenProps) => {
 
       <Countdown>
         <svg viewBox="0 0 76 76" aria-hidden="true">
-          <circle className="track" cx="38" cy="38" r={RING_R} fill="none" strokeWidth="3" />
+          <circle
+            className="track"
+            cx="38"
+            cy="38"
+            r={RING_R}
+            fill="none"
+            strokeWidth="3"
+          />
           <circle
             className="prog"
             cx="38"

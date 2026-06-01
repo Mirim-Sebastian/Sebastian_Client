@@ -69,7 +69,7 @@ export const SentMessage = styled.div`
 export const TitleMain = styled.h1`
   margin: 0;
   font-family: var(--title-font);
-  font-size: clamp(2.6rem, 5.8vw, 4rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.03em;
