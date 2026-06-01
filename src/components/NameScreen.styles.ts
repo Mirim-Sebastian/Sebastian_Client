@@ -4,8 +4,8 @@ import { BaseScreen, shake, spin, IconButton } from "./ui.styles";
 export { IconButton } from "./ui.styles";
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
-const BLUE = "#4aa3ff";
-const BLUE_RGB = "74, 163, 255";
+const BLUE = "#ffffff";
+const BLUE_RGB = "255, 255, 255";
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 const floaty = keyframes`
@@ -25,7 +25,7 @@ export const Screen = styled(BaseScreen)`
   overflow: hidden;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(6, 18, 40, 0.55);
+  background: rgba(6, 18, 40, 0.35);
   backdrop-filter: blur(18px);
   box-shadow: 0 30px 80px rgba(2, 8, 20, 0.45);
 
@@ -38,7 +38,7 @@ export const Screen = styled(BaseScreen)`
 export const Tank = styled.div`
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(13, 44, 78, 0.6), rgba(3, 12, 28, 0.85));
+  background: linear-gradient(180deg, rgba(13, 44, 78, 0.38), rgba(3, 12, 28, 0.5));
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 `;
 

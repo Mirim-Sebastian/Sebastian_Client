@@ -93,6 +93,7 @@ function App() {
   const [eraserMode, setEraserMode]   = useState<"stroke" | "brush">("stroke");
   const [color, setColor]             = useState(COLORS[0].value);
   const [customColor, setCustomColor] = useState(COLORS[0].value);
+  const [colorSource, setColorSource] = useState<"palette" | "custom">("palette");
   const [penSize, setPenSize]         = useState(PEN_SIZE_DEFAULT);
   const [eraserSize, setEraserSize]   = useState(ERASER_SIZE_DEFAULT);
   const [hasDrawing, setHasDrawing]   = useState(false);
@@ -460,7 +461,14 @@ function App() {
 
   const handleColorChange = (value: string) => {
     setColor(value);
+    setColorSource("palette");
+    if (tool === "eraser") setTool("pen");
+  };
+
+  const handleCustomColorChange = (value: string) => {
+    setColor(value);
     setCustomColor(value);
+    setColorSource("custom");
     if (tool === "eraser") setTool("pen");
   };
 
@@ -560,8 +568,9 @@ function App() {
           onRedo={handleRedo}
           onToolChange={setTool}
           onEraserModeChange={setEraserMode}
+          colorSource={colorSource}
           onColorChange={handleColorChange}
-          onCustomColorChange={handleColorChange}
+          onCustomColorChange={handleCustomColorChange}
           onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}
           onReset={resetDrawing}

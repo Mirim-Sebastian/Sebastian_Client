@@ -10,7 +10,6 @@ import {
   FishStage,
   Foot,
   Label,
-  Lead,
   MessageInput,
   NameInput,
   Placard,
@@ -85,8 +84,6 @@ export const NameScreen = ({
         <br />
         이름을 지어주세요
       </Title>
-      <Lead>이름과 한마디를 남기면 전시 바다로 헤엄쳐 갑니다.</Lead>
-
       <Rows>
         <Row $error={nameError}>
           <Label htmlFor="fish-name">이름</Label>
@@ -115,7 +112,7 @@ export const NameScreen = ({
           <MessageInput
             id="fish-message"
             value={message}
-            rows={2}
+            rows={1}
             maxLength={MAX_MESSAGE}
             placeholder="물고기가 하고 싶은 말"
             onChange={onMessageChange}

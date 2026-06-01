@@ -34,6 +34,14 @@ export const AppWrapper = styled.div`
   background-position: center;
   background-attachment: fixed;
 
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+  }
+
 `;
 
 export const AppToast = styled.div`

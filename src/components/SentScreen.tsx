@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   CountNumber,
   Countdown,
-  Eyebrow,
   FishFloat,
   Screen,
   SentMessage,
@@ -46,16 +45,14 @@ export const SentScreen = ({ onDone, draftImage, name }: SentScreenProps) => {
         </FishFloat>
       )}
 
-      <Eyebrow>{name ? `"${name}" 을(를)` : "물고기를"} 전시 바다로</Eyebrow>
-
       <SentMessage>
         <TitleMain>
-          방금 바다로 보냈어요
+          {name ? `"${name}"을(를)` : "물고기를"} 방금 바다로 보냈어요
         </TitleMain>
       </SentMessage>
 
       <SentSubtitle>
-        잠시 후 전시 화면의 바다에서 헤엄치는 모습을 만나보세요
+        잠시 후 전시 화면의 바다에서 헤엄치는 모습을 만나보세요!
       </SentSubtitle>
 
       <Countdown>

@@ -4,8 +4,8 @@ import { BaseScreen, shake, IconButton } from "./ui.styles";
 export { IconButton };
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
-const BLUE = "#4aa3ff";
-const BLUE_RGB = "74, 163, 255";
+const BLUE = "#ffffff";
+const BLUE_RGB = "255, 255, 255";
 
 // ─── Layout : 좌(수조 캔버스) · 우(도구 레일) ───────────────────────────────────
 export const Screen = styled(BaseScreen)`
@@ -25,8 +25,8 @@ export const CanvasWrap = styled.div<{ $error: boolean }>`
   overflow: hidden;
   background: linear-gradient(
     180deg,
-    rgba(13, 44, 78, 0.55),
-    rgba(4, 16, 36, 0.7)
+    rgba(13, 44, 78, 0.35),
+    rgba(4, 16, 36, 0.48)
   );
   border: 1px solid
     ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.12)")};
@@ -123,7 +123,7 @@ export const Controls = styled.div`
 `;
 
 export const RailCard = styled.div`
-  background: rgba(9, 28, 54, 0.62);
+  background: rgba(9, 28, 54, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 9px;

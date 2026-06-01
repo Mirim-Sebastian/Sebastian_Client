@@ -45,6 +45,7 @@ type DrawScreenProps = {
   tool: "pen" | "eraser" | "fill";
   eraserMode: "stroke" | "brush";
   color: string;
+  colorSource: "palette" | "custom";
   colors: ColorOption[];
   customColor: string;
   templates: FishTemplate[];
@@ -76,6 +77,7 @@ export const DrawScreen = ({
   tool,
   eraserMode,
   color,
+  colorSource,
   colors,
   customColor,
   templates,
@@ -156,13 +158,13 @@ export const DrawScreen = ({
               <ColorDot
                 key={swatch.value}
                 type="button"
-                $active={color === swatch.value}
+                $active={colorSource === "palette" && color === swatch.value}
                 style={{ backgroundColor: swatch.value }}
                 onClick={() => onColorChange(swatch.value)}
                 aria-label={`색상 ${swatch.name}`}
               />
             ))}
-            <CustomColorLabel $active={color === customColor} aria-label="커스텀 색상 선택">
+            <CustomColorLabel $active={colorSource === "custom"} aria-label="커스텀 색상 선택">
               <input
                 type="color"
                 value={customColor}

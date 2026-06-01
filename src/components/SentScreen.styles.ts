@@ -2,8 +2,8 @@ import styled, { keyframes } from "styled-components";
 import { BaseScreen } from "./ui.styles";
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
-const BLUE = "#4aa3ff";
-const BLUE_RGB = "74, 163, 255";
+const BLUE = "#ffffff";
+const BLUE_RGB = "255, 255, 255";
 
 const floaty = keyframes`
   0%, 100% { transform: translateY(0) rotate(-1deg); }
