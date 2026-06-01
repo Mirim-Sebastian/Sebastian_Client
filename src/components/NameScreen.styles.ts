@@ -38,7 +38,11 @@ export const Screen = styled(BaseScreen)`
 export const Tank = styled.div`
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(13, 44, 78, 0.38), rgba(3, 12, 28, 0.5));
+  background: linear-gradient(
+    180deg,
+    rgba(13, 44, 78, 0.38),
+    rgba(3, 12, 28, 0.5)
+  );
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 `;
 
@@ -69,19 +73,32 @@ export const Caustic = styled.div`
   pointer-events: none;
   opacity: 0.5;
   background:
-    radial-gradient(40% 30% at 30% 20%, rgba(120, 200, 255, 0.16), transparent 70%),
-    radial-gradient(35% 25% at 72% 36%, rgba(120, 200, 255, 0.12), transparent 70%);
+    radial-gradient(
+      40% 30% at 30% 20%,
+      rgba(120, 200, 255, 0.16),
+      transparent 70%
+    ),
+    radial-gradient(
+      35% 25% at 72% 36%,
+      rgba(120, 200, 255, 0.12),
+      transparent 70%
+    );
   animation: ${causticShift} 9s ease-in-out infinite alternate;
 `;
 
-export const FishImg = styled.img`
+export const FishImg = styled.img<{ $fishSize?: "small" | "medium" | "large" }>`
   position: relative;
   z-index: 2;
-  width: 60%;
-  max-height: 62%;
+  width: ${({ $fishSize }) =>
+    $fishSize === "small" ? "38%" : $fishSize === "large" ? "82%" : "60%"};
+  max-height: ${({ $fishSize }) =>
+    $fishSize === "small" ? "42%" : $fishSize === "large" ? "84%" : "62%"};
   object-fit: contain;
   animation: ${floaty} 4s ease-in-out infinite;
   filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.55));
+  transition:
+    width 0.3s ease,
+    max-height 0.3s ease;
 `;
 
 export const TankFloor = styled.div`
@@ -120,9 +137,9 @@ export const Eyebrow = styled.p`
 
 export const Title = styled.h1`
   font-family: var(--title-font);
-  margin: 12px 0 4px;
-  font-size: clamp(28px, 3.4vw, 38px);
-  font-weight: 800;
+  margin: 20px 0 16px;
+  font-size: clamp(24px, 2.7vw, 32px);
+  font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.03em;
   color: #f4faff;
@@ -145,7 +162,12 @@ export const Row = styled.div<{ $error?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 7px;
-  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
+  animation: ${({ $error }) =>
+    $error
+      ? css`
+          ${shake} 0.35s ease
+        `
+      : "none"};
 
   input,
   textarea {
@@ -192,15 +214,15 @@ const underline = css`
 
 export const NameInput = styled.input`
   ${underline};
-  font-family: var(--title-font);
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-size: 18px;
+  font-weight: 600;
 `;
 
 export const MessageInput = styled.textarea`
   ${underline};
-  font-size: 16px;
+  font-family: var(--title-font);
+  font-size: 18px;
+  font-weight: 600;
   resize: none;
   line-height: 1.5;
 `;
@@ -257,8 +279,15 @@ export const SendButton = styled.button<{ $error?: boolean }>`
   gap: 10px;
   cursor: pointer;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
-  transition: transform 0.12s, box-shadow 0.2s;
-  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
+  transition:
+    transform 0.12s,
+    box-shadow 0.2s;
+  animation: ${({ $error }) =>
+    $error
+      ? css`
+          ${shake} 0.35s ease
+        `
+      : "none"};
 
   svg {
     width: 19px;

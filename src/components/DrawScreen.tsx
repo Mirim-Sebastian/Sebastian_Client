@@ -131,22 +131,47 @@ export const DrawScreen = ({
       <Controls role="toolbar">
         <RailCard>
           <ToolRow>
-            <IconButton type="button" onClick={onUndo} disabled={!canUndo} aria-label="되돌리기">
+            <IconButton
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              aria-label="되돌리기"
+            >
               <UndoIcon />
             </IconButton>
-            <IconButton type="button" onClick={onRedo} disabled={!canRedo} aria-label="다시하기">
+            <IconButton
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              aria-label="다시하기"
+            >
               <RedoIcon />
             </IconButton>
             <IconButton type="button" onClick={onReset} aria-label="초기화">
               <ResetIcon />
             </IconButton>
-            <IconButton type="button" $active={tool === "pen"} onClick={() => onToolChange("pen")} aria-label="펜">
+            <IconButton
+              type="button"
+              $active={tool === "pen"}
+              onClick={() => onToolChange("pen")}
+              aria-label="펜"
+            >
               <PenIcon />
             </IconButton>
-            <IconButton type="button" $active={tool === "eraser"} onClick={() => onToolChange("eraser")} aria-label="지우개">
+            <IconButton
+              type="button"
+              $active={tool === "eraser"}
+              onClick={() => onToolChange("eraser")}
+              aria-label="지우개"
+            >
               <EraserIcon />
             </IconButton>
-            <IconButton type="button" $active={tool === "fill"} onClick={() => onToolChange("fill")} aria-label="채우기">
+            <IconButton
+              type="button"
+              $active={tool === "fill"}
+              onClick={() => onToolChange("fill")}
+              aria-label="채우기"
+            >
               <FillIcon />
             </IconButton>
           </ToolRow>
@@ -164,7 +189,10 @@ export const DrawScreen = ({
                 aria-label={`색상 ${swatch.name}`}
               />
             ))}
-            <CustomColorLabel $active={colorSource === "custom"} aria-label="커스텀 색상 선택">
+            <CustomColorLabel
+              $active={colorSource === "custom"}
+              aria-label="커스텀 색상 선택"
+            >
               <input
                 type="color"
                 value={customColor}
@@ -185,7 +213,9 @@ export const DrawScreen = ({
                 max={brushMax}
                 step={1}
                 value={brushSize}
-                onChange={(event) => onBrushSizeChange(Number(event.target.value))}
+                onChange={(event) =>
+                  onBrushSizeChange(Number(event.target.value))
+                }
                 aria-label={`${isEraser ? "지우개" : "브러쉬"} 크기 조절`}
                 disabled={isFill}
               />
@@ -201,10 +231,18 @@ export const DrawScreen = ({
             </BrushTrack>
             {isEraser && (
               <EraserModeGroup role="group" aria-label="지우개 방식 선택">
-                <ModeChip type="button" $active={eraserMode === "stroke"} onClick={() => onEraserModeChange("stroke")}>
+                <ModeChip
+                  type="button"
+                  $active={eraserMode === "stroke"}
+                  onClick={() => onEraserModeChange("stroke")}
+                >
                   선으로 지우기
                 </ModeChip>
-                <ModeChip type="button" $active={eraserMode === "brush"} onClick={() => onEraserModeChange("brush")}>
+                <ModeChip
+                  type="button"
+                  $active={eraserMode === "brush"}
+                  onClick={() => onEraserModeChange("brush")}
+                >
                   브러쉬로 지우기
                 </ModeChip>
               </EraserModeGroup>
@@ -232,7 +270,6 @@ export const DrawScreen = ({
 
         <CompleteButton type="button" onClick={onComplete} aria-label="완료">
           <CheckIcon />
-          <span>다 그렸어요</span>
         </CompleteButton>
       </Controls>
     </Screen>

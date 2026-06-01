@@ -5,7 +5,6 @@ import {
   BackLink,
   Caustic,
   Count,
-  Eyebrow,
   FishImg,
   FishStage,
   Foot,
@@ -20,7 +19,6 @@ import {
   SendButton,
   SizeSeg,
   SizeSegButton,
-  Specimen,
   Tank,
   TankFloor,
   Title,
@@ -70,7 +68,7 @@ export const NameScreen = ({
     <Tank>
       <FishStage>
         <Caustic />
-        {draftImage && <FishImg src={draftImage} alt="" />}
+        {draftImage && <FishImg src={draftImage} alt="" $fishSize={fishSize} />}
       </FishStage>
       <TankFloor />
     </Tank>
@@ -78,12 +76,7 @@ export const NameScreen = ({
     {/* 명패 (우측) */}
     <Placard>
       <Rule />
-      <Eyebrow>물고기 등록</Eyebrow>
-      <Title>
-        이 물고기의
-        <br />
-        이름을 지어주세요
-      </Title>
+      <Title>이름을 지어주세요</Title>
       <Rows>
         <Row $error={nameError}>
           <Label htmlFor="fish-name">이름</Label>
@@ -92,10 +85,11 @@ export const NameScreen = ({
             type="text"
             value={name}
             maxLength={MAX_NAME}
-            placeholder="예) 세바스찬"
+            placeholder="세바스찬"
             onChange={onNameChange}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.nativeEvent.isComposing) onSubmit();
+              if (event.key === "Enter" && !event.nativeEvent.isComposing)
+                onSubmit();
             }}
             aria-label="물고기 이름"
             disabled={isSubmitting}
@@ -114,7 +108,7 @@ export const NameScreen = ({
             value={message}
             rows={1}
             maxLength={MAX_MESSAGE}
-            placeholder="물고기가 하고 싶은 말"
+            placeholder="안녕! 난 세바스찬이야"
             onChange={onMessageChange}
             aria-label="물고기 메시지"
             disabled={isSubmitting}
