@@ -39,8 +39,8 @@ export const AppWrapper = styled.div`
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(180deg, rgba(3, 17, 37, 0.16), rgba(3, 17, 37, 0.34)),
-      radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 28%);
+      linear-gradient(180deg, rgba(2, 10, 26, 0.72), rgba(1, 6, 18, 0.88)),
+      radial-gradient(circle at top, rgba(10, 40, 80, 0.3), transparent 50%);
     pointer-events: none;
   }
 `;

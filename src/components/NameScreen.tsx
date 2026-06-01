@@ -1,18 +1,30 @@
 import type { ChangeEvent } from "react";
-import { BackIcon, CheckIcon, SpinnerIcon } from "./icons";
+import { CheckIcon, SpinnerIcon } from "./icons";
+import { MAX_MESSAGE, MAX_NAME } from "../constants";
 import {
-  BackButton,
-  FieldLabel,
-  FormActions,
-  FormBody,
-  FormCard,
-  IconButton,
-  MessageField,
-  NameField,
-  Preview,
+  BackLink,
+  Caustic,
+  Count,
+  Eyebrow,
+  FishImg,
+  FishStage,
+  Foot,
+  Label,
+  Lead,
+  MessageInput,
+  NameInput,
+  Placard,
+  Row,
+  Rows,
+  Rule,
   Screen,
-  SizeButton,
-  SizeSelector,
+  SendButton,
+  SizeSeg,
+  SizeSegButton,
+  Specimen,
+  Tank,
+  TankFloor,
+  Title,
 } from "./NameScreen.styles";
 
 export type FishSize = "small" | "medium" | "large";
@@ -55,25 +67,35 @@ export const NameScreen = ({
   onSubmit,
 }: NameScreenProps) => (
   <Screen>
-    <BackButton type="button" onClick={onBack} aria-label="뒤로가기">
-      <BackIcon />
-    </BackButton>
+    {/* 표본 수조 (좌측) */}
+    <Tank>
+      <FishStage>
+        <Caustic />
+        {draftImage && <FishImg src={draftImage} alt="" />}
+      </FishStage>
+      <TankFloor />
+    </Tank>
 
-    <FormCard>
-      {draftImage && (
-        <Preview>
-          <img src={draftImage} alt="" />
-        </Preview>
-      )}
+    {/* 명패 (우측) */}
+    <Placard>
+      <Rule />
+      <Eyebrow>물고기 등록</Eyebrow>
+      <Title>
+        이 물고기의
+        <br />
+        이름을 지어주세요
+      </Title>
+      <Lead>이름과 한마디를 남기면 전시 바다로 헤엄쳐 갑니다.</Lead>
 
-      <FormBody>
-        <NameField $error={nameError}>
-          <FieldLabel htmlFor="fish-name">물고기 이름</FieldLabel>
-          <input
+      <Rows>
+        <Row $error={nameError}>
+          <Label htmlFor="fish-name">이름</Label>
+          <NameInput
             id="fish-name"
             type="text"
             value={name}
-            placeholder="이름을 입력하세요"
+            maxLength={MAX_NAME}
+            placeholder="예) 세바스찬"
             onChange={onNameChange}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.nativeEvent.isComposing) onSubmit();
@@ -81,26 +103,32 @@ export const NameScreen = ({
             aria-label="물고기 이름"
             disabled={isSubmitting}
           />
-        </NameField>
+        </Row>
 
-        <MessageField $error={messageError}>
-          <FieldLabel htmlFor="fish-message">메시지</FieldLabel>
-          <textarea
+        <Row $error={messageError}>
+          <Label htmlFor="fish-message">
+            한 마디
+            <Count>
+              {message.length}/{MAX_MESSAGE}
+            </Count>
+          </Label>
+          <MessageInput
             id="fish-message"
             value={message}
-            placeholder="물고기가 할 말을 입력하세요"
+            rows={2}
+            maxLength={MAX_MESSAGE}
+            placeholder="물고기가 하고 싶은 말"
             onChange={onMessageChange}
             aria-label="물고기 메시지"
             disabled={isSubmitting}
-            rows={3}
           />
-        </MessageField>
+        </Row>
 
-        <div>
-          <FieldLabel as="span">물고기 크기</FieldLabel>
-          <SizeSelector>
+        <Row>
+          <Label as="span">크기</Label>
+          <SizeSeg role="group" aria-label="물고기 크기 선택">
             {SIZE_OPTIONS.map(({ value, label }) => (
-              <SizeButton
+              <SizeSegButton
                 key={value}
                 type="button"
                 $active={fishSize === value}
@@ -108,24 +136,26 @@ export const NameScreen = ({
                 disabled={isSubmitting}
               >
                 {label}
-              </SizeButton>
+              </SizeSegButton>
             ))}
-          </SizeSelector>
-        </div>
+          </SizeSeg>
+        </Row>
+      </Rows>
 
-        <FormActions>
-          <IconButton
-            type="button"
-            $primary
-            $error={submitError}
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            aria-label="전송"
-          >
-            {isSubmitting ? <SpinnerIcon /> : <CheckIcon />}
-          </IconButton>
-        </FormActions>
-      </FormBody>
-    </FormCard>
+      <Foot>
+        <SendButton
+          type="button"
+          $error={submitError}
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          aria-label="전송"
+        >
+          {isSubmitting ? <SpinnerIcon /> : <CheckIcon />}
+        </SendButton>
+        <BackLink type="button" onClick={onBack} disabled={isSubmitting}>
+          ← 다시 그리기
+        </BackLink>
+      </Foot>
+    </Placard>
   </Screen>
 );

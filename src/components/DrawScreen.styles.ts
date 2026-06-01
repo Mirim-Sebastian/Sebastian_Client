@@ -3,151 +3,209 @@ import { BaseScreen, shake, IconButton } from "./ui.styles";
 
 export { IconButton };
 
-// ─── Layout ──────────────────────────────────────────────────────────────────
+// ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
+const BLUE = "#4aa3ff";
+const BLUE_DEEP = "#2f7fe0";
+const BLUE_RGB = "74, 163, 255";
+const ON_BLUE = "#04162e";
 
+// ─── Layout : 좌(수조 캔버스) · 우(도구 레일) ───────────────────────────────────
 export const Screen = styled(BaseScreen)`
-  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr 268px;
+  gap: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
 `;
 
-// ─── Toolbar ─────────────────────────────────────────────────────────────────
+// ─── 캔버스 수조 (좌) ────────────────────────────────────────────────────────────
+export const CanvasWrap = styled.div<{ $error: boolean }>`
+  position: relative;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(13, 44, 78, 0.55),
+    rgba(4, 16, 36, 0.7)
+  );
+  border: 1px solid
+    ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.12)")};
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    0 30px 70px rgba(2, 8, 20, 0.4);
+  transition: border-color 0.2s;
+  animation: ${({ $error }) =>
+    $error
+      ? css`
+          ${shake} 0.36s ease
+        `
+      : "none"};
 
+  /* 유리 반사 */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    border-radius: 26px;
+    background:
+      linear-gradient(125deg, rgba(255, 255, 255, 0.06) 0%, transparent 22%),
+      radial-gradient(
+        80% 50% at 50% 0%,
+        rgba(120, 200, 255, 0.06),
+        transparent 60%
+      );
+  }
+`;
+
+export const CanvasLayer = styled.div`
+  position: absolute;
+  inset: 0;
+`;
+
+const BaseCanvas = styled.canvas`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  display: block;
+`;
+
+export const DrawingCanvas = styled(BaseCanvas)`
+  z-index: 2;
+  touch-action: none;
+  cursor: crosshair;
+`;
+
+export const FrameCanvas = styled(BaseCanvas)`
+  z-index: 1;
+  pointer-events: none;
+`;
+
+export const CanvasHint = styled.div`
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  padding: 9px 18px;
+  border-radius: 12px;
+  background: rgba(6, 20, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(234, 242, 255, 0.7);
+  white-space: nowrap;
+`;
+
+// ─── 도구 레일 (우) ──────────────────────────────────────────────────────────────
 export const Controls = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 14px;
-  background: rgba(8, 26, 50, 0.62);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 8px 30px rgba(2, 8, 20, 0.22);
+  min-height: 0;
+
+  ${IconButton} {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  @media (max-width: 900px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 `;
 
-export const ControlsRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
+export const RailCard = styled.div`
+  background: rgba(9, 28, 54, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 9px;
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 10px 30px rgba(2, 8, 20, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 `;
 
-export const ControlDivider = styled.div`
-  width: 1px;
-  align-self: stretch;
-  background: rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-  margin-inline: 2px;
+export const RailTitle = styled.p`
+  margin: 0 0 7px 2px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: rgba(234, 242, 255, 0.34);
+  text-transform: uppercase;
 `;
 
-export const ControlInnerDivider = styled.div`
-  width: 1px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-`;
-
-// ─── Control groups ───────────────────────────────────────────────────────────
-
-export const ToolGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-`;
-
-export const ControlGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-export const PaletteGroup = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 7px;
-`;
-
-export const BrushGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-`;
-
-export const TemplatesGroup = styled.div`
-  display: flex;
-  align-items: center;
+export const ToolRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  margin-left: auto;
+
+  ${IconButton} {
+    width: auto;
+    height: 44px;
+  }
 `;
 
-// ─── Eraser mode toggle ───────────────────────────────────────────────────────
+export const RailSpacer = styled.div`
+  flex: 1;
 
-export const EraserModeGroup = styled.div`
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  align-items: center;
+  @media (max-width: 900px) {
+    display: none;
+  }
 `;
 
-export const ModeChip = styled.button<{ $active: boolean }>`
-  padding: 5px 10px;
-  border-radius: 7px;
-  border: none;
-  background: ${({ $active }) =>
-    $active ? "rgba(255,255,255,0.14)" : "transparent"};
-  color: ${({ $active }) =>
-    $active ? "var(--ink)" : "rgba(230, 240, 255, 0.5)"};
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+// ─── 색상 팔레트 ─────────────────────────────────────────────────────────────────
+export const PaletteGroup = styled.div`
+  display: grid;
+  grid-template-columns: repeat(6, 40px);
+  column-gap: 2px;
+  row-gap: 8px;
+  justify-content: space-between;
 `;
-
-// ─── Color palette ────────────────────────────────────────────────────────────
 
 export const ColorDot = styled.button<{ $active: boolean }>`
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  justify-self: center;
+  border-radius: 50%;
   border: 2px solid
-    ${({ $active }) =>
-      $active ? "rgba(255,255,255,0.9)" : "rgba(255, 255, 255, 0.35)"};
+    ${({ $active }) => ($active ? "#fff" : "rgba(255, 255, 255, 0.28)")};
   box-shadow: ${({ $active }) =>
     $active
-      ? "0 0 0 2px var(--accent), inset 0 0 0 1px rgba(2,16,32,0.3)"
-      : "inset 0 0 0 1px rgba(2,16,32,0.3)"};
+      ? `0 0 0 3px rgba(${BLUE_RGB}, 0.55), inset 0 0 0 1px rgba(2,16,32,0.3)`
+      : "inset 0 0 0 1px rgba(2,16,32,0.35)"};
+  transform: ${({ $active }) => ($active ? "scale(1.06)" : "none")};
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  flex-shrink: 0;
+  transition:
+    transform 0.12s,
+    box-shadow 0.15s,
+    border-color 0.15s;
 `;
 
 export const CustomColorLabel = styled.label<{ $active: boolean }>`
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  border: 2px solid
-    ${({ $active }) =>
-      $active ? "rgba(255,255,255,0.9)" : "rgba(255, 255, 255, 0.35)"};
-  box-shadow: ${({ $active }) =>
-    $active
-      ? "0 0 0 2px var(--accent), inset 0 0 0 1px rgba(2,16,32,0.3)"
-      : "inset 0 0 0 1px rgba(2,16,32,0.3)"};
-  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  justify-self: center;
+  border-radius: 50%;
   position: relative;
   overflow: hidden;
   display: block;
-  flex-shrink: 0;
+  cursor: pointer;
+  border: 2px solid
+    ${({ $active }) => ($active ? "#fff" : "rgba(255, 255, 255, 0.28)")};
+  box-shadow: ${({ $active }) =>
+    $active
+      ? `0 0 0 3px rgba(${BLUE_RGB}, 0.55)`
+      : "inset 0 0 0 1px rgba(2,16,32,0.35)"};
   background: conic-gradient(
     #ff3b3b,
     #ffb347,
@@ -159,7 +217,6 @@ export const CustomColorLabel = styled.label<{ $active: boolean }>`
     #ff7ab6,
     #ff3b3b
   );
-  transition: border-color 0.15s, box-shadow 0.15s;
 
   input {
     position: absolute;
@@ -169,72 +226,26 @@ export const CustomColorLabel = styled.label<{ $active: boolean }>`
   }
 `;
 
-// ─── Template button ──────────────────────────────────────────────────────────
-
-export const TemplateButton = styled.button<{ $active: boolean }>`
-  width: 52px;
-  height: 38px;
-  border-radius: 10px;
-  background: ${({ $active }) =>
-    $active ? "rgba(255, 255, 255, 0.14)" : "rgba(255, 255, 255, 0.05)"};
-  border: 1px solid
-    ${({ $active }) =>
-      $active ? "rgba(255, 255, 255, 0.75)" : "rgba(255, 255, 255, 0.1)"};
-  color: ${({ $active }) => ($active ? "var(--ink)" : "rgba(230,240,255,0.6)")};
+// ─── 브러쉬 굵기 ─────────────────────────────────────────────────────────────────
+export const BrushGroup = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-
-  img {
-    width: 38px;
-    height: 22px;
-    object-fit: contain;
-    filter: ${({ $active }) =>
-      $active ? "brightness(0) invert(1)" : "brightness(0) invert(0.5)"};
-    transition: filter 0.15s;
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.22);
-    img { filter: brightness(0) invert(0.85); }
-  }
-
-  ${({ $active }) =>
-    $active &&
-    `
-    &:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.9);
-      img { filter: brightness(0) invert(1); }
-    }
-  `}
+  flex-direction: column;
+  gap: 8px;
 `;
 
-// ─── Brush controls ───────────────────────────────────────────────────────────
+export const BrushTrack = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
 
 export const BrushLabel = styled.label`
-  font-size: 0.78rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(230, 240, 255, 0.5);
-  white-space: nowrap;
-`;
-
-export const BrushValue = styled.span`
-  color: rgba(230, 240, 255, 0.9);
-  font-weight: 700;
-  font-size: 0.82rem;
-  min-width: 1.6ch;
+  display: none;
 `;
 
 export const BrushRange = styled.input`
-  width: min(160px, 100%);
-  accent-color: var(--accent);
+  flex: 1;
+  accent-color: ${BLUE};
   cursor: pointer;
 
   &:disabled {
@@ -243,63 +254,134 @@ export const BrushRange = styled.input`
   }
 `;
 
-// ─── Canvas area ──────────────────────────────────────────────────────────────
+export const SizePreview = styled.div`
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+`;
 
-export const CanvasWrap = styled.div<{ $error: boolean }>`
+export const SizeDot = styled.span`
+  border-radius: 50%;
+  display: block;
+`;
+
+// ─── 지우개 방식 토글 ─────────────────────────────────────────────────────────────
+export const EraserModeGroup = styled.div`
+  display: flex;
+  gap: 4px;
+`;
+
+export const ModeChip = styled.button<{ $active: boolean }>`
   flex: 1;
-  background: rgba(8, 33, 61, 0.42);
-  border-radius: 22px;
-  padding: 14px;
-  border: 2px solid
-    ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.2)")};
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 30px 80px rgba(2, 8, 20, 0.24);
-  min-height: 360px;
-  backdrop-filter: blur(12px);
-  animation: ${({ $error }) => ($error ? css`${shake} 0.35s ease` : "none")};
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1px solid
+    ${({ $active }) => ($active ? BLUE : "rgba(255, 255, 255, 0.1)")};
+  background: ${({ $active }) =>
+    $active ? `rgba(${BLUE_RGB}, 0.14)` : "rgba(255, 255, 255, 0.04)"};
+  color: ${({ $active }) => ($active ? BLUE : "rgba(230, 240, 255, 0.5)")};
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+`;
 
-  @media (max-width: 900px) {
-    min-height: 300px;
+// ─── 물고기 틀 ───────────────────────────────────────────────────────────────────
+export const TemplatesGroup = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+`;
+
+export const TemplateButton = styled.button<{ $active: boolean }>`
+  aspect-ratio: 1.35;
+  border-radius: 10px;
+  background: ${({ $active }) =>
+    $active ? `rgba(${BLUE_RGB}, 0.12)` : "rgba(255, 255, 255, 0.04)"};
+  border: 1px solid
+    ${({ $active }) => ($active ? BLUE : "rgba(255, 255, 255, 0.07)")};
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: ${({ $active }) =>
+      $active ? "brightness(0) invert(1)" : "brightness(0) invert(0.5)"};
+    transition: filter 0.15s;
+  }
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    img {
+      filter: ${({ $active }) =>
+        $active ? "brightness(0) invert(1)" : "brightness(0) invert(0.8)"};
+    }
   }
 `;
 
-export const CanvasLayer = styled.div`
+// ─── 완료 버튼 ───────────────────────────────────────────────────────────────────
+export const CompleteButton = styled.button`
   width: 100%;
-  height: 100%;
-  position: relative;
-`;
-
-const BaseCanvas = styled.canvas`
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  display: block;
-  touch-action: none;
-  position: absolute;
-  inset: 0;
-`;
-
-export const DrawingCanvas = styled(BaseCanvas)`
-  background: transparent;
-  z-index: 1;
-`;
-
-export const FrameCanvas = styled(BaseCanvas)`
-  pointer-events: none;
-  z-index: 2;
-`;
-
-export const CanvasHint = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 3;
+  height: 48px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(180deg, ${BLUE}, ${BLUE_DEEP});
+  color: ${ON_BLUE};
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: rgba(230, 240, 255, 0.55);
-  letter-spacing: 0.04em;
+  gap: 7px;
+  cursor: pointer;
+  box-shadow:
+    0 14px 30px rgba(${BLUE_RGB}, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.12s,
+    box-shadow 0.2s;
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+  .line-icon {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+  }
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 38px rgba(${BLUE_RGB}, 0.36);
+  }
+  &:active {
+    transform: translateY(0);
+  }
 `;
+
+// (구버전 호환용 — 더 이상 사용 안 함)
+export const ControlsRow = styled.div``;
+export const ControlDivider = styled.div``;
+export const ControlInnerDivider = styled.div``;
+export const ToolGroup = styled.div``;
+export const ControlGroup = styled.div``;
+export const BrushValue = styled.span``;

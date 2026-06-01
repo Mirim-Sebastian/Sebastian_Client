@@ -10,6 +10,7 @@ import { postFish } from "./api/fish";
 import { DrawScreen } from "./components/DrawScreen";
 import { NameScreen, type FishSize } from "./components/NameScreen";
 import { SentScreen } from "./components/SentScreen";
+import { BrandBar } from "./components/BrandBar";
 import { FISH_TEMPLATES } from "./components/fishTemplates";
 import {
   BRUSH_MAX,
@@ -538,6 +539,8 @@ function App() {
 
       {canvasHint && <AppToast>{canvasHint}</AppToast>}
 
+      <BrandBar step={step} />
+
       <div style={{ display: step === "draw" ? "flex" : "none", width: "100%", justifyContent: "center" }}>
         <DrawScreen
           tool={tool}
@@ -561,6 +564,7 @@ function App() {
           onCustomColorChange={handleColorChange}
           onBrushSizeChange={handleBrushSizeChange}
           onSelectTemplate={handleTemplateSelect}
+          onReset={resetDrawing}
           onComplete={handleCompleteDrawing}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -588,7 +592,7 @@ function App() {
         />
       )}
 
-      {step === "sent" && <SentScreen onDone={handleSentDone} />}
+      {step === "sent" && <SentScreen onDone={handleSentDone} draftImage={draftImage} name={name} />}
     </AppWrapper>
   );
 }

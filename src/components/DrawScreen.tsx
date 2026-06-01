@@ -5,20 +5,20 @@ import {
   FillIcon,
   PenIcon,
   RedoIcon,
+  ResetIcon,
   UndoIcon,
 } from "./icons";
 import type { FishTemplate } from "./fishTemplates";
 import {
   BrushGroup,
-  BrushLabel,
   BrushRange,
+  BrushTrack,
+  CanvasHint,
   CanvasLayer,
   CanvasWrap,
-  ControlDivider,
-  ControlInnerDivider,
-  Controls,
-  ControlsRow,
   ColorDot,
+  CompleteButton,
+  Controls,
   CustomColorLabel,
   DrawingCanvas,
   EraserModeGroup,
@@ -26,10 +26,15 @@ import {
   IconButton,
   ModeChip,
   PaletteGroup,
+  RailCard,
+  RailSpacer,
+  RailTitle,
   Screen,
+  SizeDot,
+  SizePreview,
   TemplateButton,
   TemplatesGroup,
-  ToolGroup,
+  ToolRow,
 } from "./DrawScreen.styles";
 
 type ColorOption = {
@@ -59,6 +64,7 @@ type DrawScreenProps = {
   onCustomColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
   onSelectTemplate: (templateId: string) => void;
+  onReset: () => void;
   onComplete: () => void;
   onPointerDown: (event: PointerEvent<HTMLCanvasElement>) => void;
   onPointerMove: (event: PointerEvent<HTMLCanvasElement>) => void;
@@ -89,6 +95,7 @@ export const DrawScreen = ({
   onCustomColorChange,
   onBrushSizeChange,
   onSelectTemplate,
+  onReset,
   onComplete,
   onPointerDown,
   onPointerMove,
@@ -96,61 +103,57 @@ export const DrawScreen = ({
   drawCanvasRef,
   frameCanvasRef,
 }: DrawScreenProps) => {
+  const isEraser = tool === "eraser";
   const isFill = tool === "fill";
-  const sizeLabel = tool === "eraser" ? "지우개" : "브러쉬";
+  const dotPx = Math.max(6, Math.min(26, brushSize * 0.6));
 
   return (
     <Screen>
-      <Controls role="toolbar">
+      {/* 좌측 — 캔버스 수조 */}
+      <CanvasWrap $error={drawError}>
+        <CanvasLayer>
+          <FrameCanvas ref={frameCanvasRef} aria-hidden="true" />
+          <DrawingCanvas
+            ref={drawCanvasRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ cursor: isFill ? "pointer" : "crosshair" }}
+          />
+        </CanvasLayer>
+        {drawError && <CanvasHint>물고기를 그려주세요</CanvasHint>}
+      </CanvasWrap>
 
-        {/* 첫 번째 줄: 도구 + 팔레트 + 완료 */}
-        <ControlsRow>
-          <ToolGroup>
-            <IconButton
-              type="button"
-              onClick={onUndo}
-              disabled={!canUndo}
-              aria-label="되돌리기"
-            >
+      {/* 우측 — 도구 레일 */}
+      <Controls role="toolbar">
+        <RailCard>
+          <RailTitle>도구</RailTitle>
+          <ToolRow>
+            <IconButton type="button" onClick={onUndo} disabled={!canUndo} aria-label="되돌리기">
               <UndoIcon />
             </IconButton>
-            <IconButton
-              type="button"
-              onClick={onRedo}
-              disabled={!canRedo}
-              aria-label="다시하기"
-            >
+            <IconButton type="button" onClick={onRedo} disabled={!canRedo} aria-label="다시하기">
               <RedoIcon />
             </IconButton>
-            <ControlInnerDivider aria-hidden="true" />
-            <IconButton
-              type="button"
-              $active={tool === "pen"}
-              onClick={() => onToolChange("pen")}
-              aria-label="펜"
-            >
+            <IconButton type="button" onClick={onReset} aria-label="초기화">
+              <ResetIcon />
+            </IconButton>
+            <IconButton type="button" $active={tool === "pen"} onClick={() => onToolChange("pen")} aria-label="펜">
               <PenIcon />
             </IconButton>
-            <IconButton
-              type="button"
-              $active={tool === "eraser"}
-              onClick={() => onToolChange("eraser")}
-              aria-label="지우개"
-            >
+            <IconButton type="button" $active={tool === "eraser"} onClick={() => onToolChange("eraser")} aria-label="지우개">
               <EraserIcon />
             </IconButton>
-            <IconButton
-              type="button"
-              $active={tool === "fill"}
-              onClick={() => onToolChange("fill")}
-              aria-label="채우기"
-            >
+            <IconButton type="button" $active={tool === "fill"} onClick={() => onToolChange("fill")} aria-label="채우기">
               <FillIcon />
             </IconButton>
-          </ToolGroup>
+          </ToolRow>
+        </RailCard>
 
-          <ControlDivider aria-hidden="true" />
-
+        <RailCard>
+          <RailTitle>색상</RailTitle>
           <PaletteGroup>
             {colors.map((swatch) => (
               <ColorDot
@@ -162,10 +165,7 @@ export const DrawScreen = ({
                 aria-label={`색상 ${swatch.name}`}
               />
             ))}
-            <CustomColorLabel
-              $active={color === customColor}
-              aria-label="커스텀 색상 선택"
-            >
+            <CustomColorLabel $active={color === customColor} aria-label="커스텀 색상 선택">
               <input
                 type="color"
                 value={customColor}
@@ -174,58 +174,48 @@ export const DrawScreen = ({
               />
             </CustomColorLabel>
           </PaletteGroup>
+        </RailCard>
 
-          <ControlDivider aria-hidden="true" />
-
-          <IconButton
-            type="button"
-            $primary
-            onClick={onComplete}
-            aria-label="완료"
-          >
-            <CheckIcon />
-          </IconButton>
-        </ControlsRow>
-
-        {/* 두 번째 줄: 브러쉬/지우개 설정 + 템플릿 */}
-        <ControlsRow>
+        <RailCard>
+          <RailTitle>{isFill ? "채우기" : isEraser ? "지우개" : "굵기"}</RailTitle>
           <BrushGroup>
-            <BrushLabel htmlFor="brush-size">
-              {isFill ? "채우기" : sizeLabel}
-            </BrushLabel>
-            <BrushRange
-              id="brush-size"
-              type="range"
-              min={brushMin}
-              max={brushMax}
-              step={1}
-              value={brushSize}
-              onChange={(event) =>
-                onBrushSizeChange(Number(event.target.value))
-              }
-              aria-label={`${sizeLabel} 크기 조절`}
-              disabled={isFill}
-            />
-            {tool === "eraser" && (
+            <BrushTrack>
+              <BrushRange
+                id="brush-size"
+                type="range"
+                min={brushMin}
+                max={brushMax}
+                step={1}
+                value={brushSize}
+                onChange={(event) => onBrushSizeChange(Number(event.target.value))}
+                aria-label={`${isEraser ? "지우개" : "브러쉬"} 크기 조절`}
+                disabled={isFill}
+              />
+              <SizePreview>
+                <SizeDot
+                  style={{
+                    width: dotPx,
+                    height: dotPx,
+                    background: isEraser ? "rgba(234,242,255,0.4)" : color,
+                  }}
+                />
+              </SizePreview>
+            </BrushTrack>
+            {isEraser && (
               <EraserModeGroup role="group" aria-label="지우개 방식 선택">
-                <ModeChip
-                  type="button"
-                  $active={eraserMode === "stroke"}
-                  onClick={() => onEraserModeChange("stroke")}
-                >
+                <ModeChip type="button" $active={eraserMode === "stroke"} onClick={() => onEraserModeChange("stroke")}>
                   선으로 지우기
                 </ModeChip>
-                <ModeChip
-                  type="button"
-                  $active={eraserMode === "brush"}
-                  onClick={() => onEraserModeChange("brush")}
-                >
+                <ModeChip type="button" $active={eraserMode === "brush"} onClick={() => onEraserModeChange("brush")}>
                   브러쉬로 지우기
                 </ModeChip>
               </EraserModeGroup>
             )}
           </BrushGroup>
+        </RailCard>
 
+        <RailCard>
+          <RailTitle>물고기 틀</RailTitle>
           <TemplatesGroup>
             {templates.map((template) => (
               <TemplateButton
@@ -239,27 +229,15 @@ export const DrawScreen = ({
               </TemplateButton>
             ))}
           </TemplatesGroup>
-        </ControlsRow>
+        </RailCard>
 
+        <RailSpacer />
+
+        <CompleteButton type="button" onClick={onComplete} aria-label="완료">
+          <CheckIcon />
+          <span>다 그렸어요</span>
+        </CompleteButton>
       </Controls>
-
-      <CanvasWrap $error={drawError}>
-        <CanvasLayer>
-          <DrawingCanvas
-            ref={drawCanvasRef}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-            onPointerCancel={onPointerUp}
-          />
-          <FrameCanvas
-            ref={frameCanvasRef}
-            aria-hidden="true"
-          />
-
-        </CanvasLayer>
-      </CanvasWrap>
     </Screen>
   );
 };

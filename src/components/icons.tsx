@@ -52,6 +52,14 @@ export const BackIcon = ({ className }: IconProps) => (
   </svg>
 )
 
+export const ResetIcon = () => (
+  <svg className="line-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 6h18" strokeLinecap="round" />
+    <path d="M8 6V4h8v2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export const SpinnerIcon = () => (
   <svg className="spinner line-icon" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="9" strokeWidth="2" opacity="0.3" />
