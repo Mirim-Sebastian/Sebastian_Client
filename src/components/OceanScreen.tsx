@@ -146,7 +146,7 @@ function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
   const xMin = -fishWPct * 0.3;
   const xMax = 100 - fishWPct * 0.7;
   const yMin = -fishHPct * 0.3;
-  const yMax = 100 - fishHPct * 0.7;
+  const yMax = 100 - fishHPct * 1.2;
 
   let newDirection = fish.direction;
   let newX = fish.x + fish.speed * newDirection * t;
@@ -320,7 +320,7 @@ export default function OceanScreen() {
     const xMin = -fishWPct * 0.3;
     const xMax = 100 - fishWPct * 0.7;
     const yMin = -fishHPct * 0.3;
-    const yMax = 100 - fishHPct * 0.7;
+    const yMax = 100 - fishHPct * 1.2;
     const x = Math.max(
       xMin,
       Math.min(xMax, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
