@@ -395,7 +395,7 @@ function App() {
     const canvas   = drawCanvasRef.current;
     const ctx      = contextRef.current;
     const frameCtx = frameContextRef.current;
-    if (canvas && ctx && frameCtx && checkFishCoverage(canvas, ctx, frameCtx) < 0.5) {
+    if (selectedTemplateId !== "free" && canvas && ctx && frameCtx && checkFishCoverage(canvas, ctx, frameCtx) < 0.5) {
       flashError(setDrawError);
       setCanvasHint("그림틀의 50% 이상을 채워주세요");
       return;
@@ -520,6 +520,11 @@ function App() {
 
   useEffect(() => {
     const template = FISH_TEMPLATES.find((t) => t.id === selectedTemplateId) ?? FISH_TEMPLATES[0];
+    if (!template.imageUrl) {
+      templateImageRef.current = null;
+      window.requestAnimationFrame(() => { updateFrame(); redrawCanvas(actionsRef.current); });
+      return;
+    }
     const img = new Image();
     img.onload = () => {
       templateImageRef.current = img;
