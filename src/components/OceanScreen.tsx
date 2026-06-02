@@ -137,8 +137,16 @@ function makeFish(
   };
 }
 
-function moveFish(fish: Fish, t: number): Fish {
+function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
   if (fish.dragging) return fish;
+
+  // 물고기 크기를 퍼센트로 환산해 경계를 대칭으로 계산
+  const fishWPct = ow > 0 ? (fish.scale / ow) * 100 : 15;
+  const fishHPct = oh > 0 ? (fish.scale * 0.55 / oh) * 100 : 10;
+  const xMin = -fishWPct * 0.3;
+  const xMax = 100 - fishWPct * 0.7;
+  const yMin = -fishHPct * 0.3;
+  const yMax = 100 - fishHPct * 0.7;
 
   let newDirection = fish.direction;
   let newX = fish.x + fish.speed * newDirection * t;
@@ -148,12 +156,12 @@ function moveFish(fish: Fish, t: number): Fish {
 
   const entering = fish.entering && (newX < 5 || newX > 95);
   if (!entering) {
-    if (newX > 97) {
-      newX = 97;
+    if (newX > xMax) {
+      newX = xMax;
       newDirection = -1;
     }
-    if (newX < 3) {
-      newX = 3;
+    if (newX < xMin) {
+      newX = xMin;
       newDirection = 1;
     }
   }
@@ -168,12 +176,12 @@ function moveFish(fish: Fish, t: number): Fish {
     Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
   let newY = fish.y + (waveY + newVerticalVelocity) * t;
 
-  if (newY > 92) {
-    newY = 92;
+  if (newY > yMax) {
+    newY = yMax;
     newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
   }
-  if (newY < 5) {
-    newY = 5;
+  if (newY < yMin) {
+    newY = yMin;
     newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
   }
 
@@ -306,13 +314,20 @@ export default function OceanScreen() {
     }
     const rect = oceanRef.current?.getBoundingClientRect();
     if (!rect) return;
+    const fish = fishListRef.current.find((f) => f.id === fishId);
+    const fishWPct = rect.width > 0 ? (fish?.scale ?? 250) / rect.width * 100 : 15;
+    const fishHPct = rect.height > 0 ? (fish?.scale ?? 250) * 0.55 / rect.height * 100 : 10;
+    const xMin = -fishWPct * 0.3;
+    const xMax = 100 - fishWPct * 0.7;
+    const yMin = -fishHPct * 0.3;
+    const yMax = 100 - fishHPct * 0.7;
     const x = Math.max(
-      3,
-      Math.min(97, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
+      xMin,
+      Math.min(xMax, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
     );
     const y = Math.max(
-      5,
-      Math.min(92, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY),
+      yMin,
+      Math.min(yMax, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY),
     );
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
     if (idx !== -1)
@@ -440,7 +455,7 @@ export default function OceanScreen() {
       const ow = oceanEl.offsetWidth;
       const oh = oceanEl.offsetHeight;
 
-      let fish = fishListRef.current.map((f) => moveFish(f, t));
+      let fish = fishListRef.current.map((f) => moveFish(f, t, ow, oh));
       const currentShark = sharkRef.current;
 
       if (currentShark) {
