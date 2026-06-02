@@ -17,6 +17,11 @@ export type FishTemplate = {
 
 export const FISH_TEMPLATES: FishTemplate[] = [
   {
+    id: "free",
+    icon: null,
+    imageUrl: "",
+  },
+  {
     id: "goldfish",
     icon: <img src={goldfishUrl} alt="금붕어" />,
     imageUrl: goldfishUrl,

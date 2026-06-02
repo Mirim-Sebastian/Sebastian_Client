@@ -1,24 +1,25 @@
-import type { PointerEvent, RefObject } from "react";
+import type { MouseEvent, PointerEvent, RefObject } from "react";
 import {
   CheckIcon,
   EraserIcon,
+  EyeDropperIcon,
   FillIcon,
   PenIcon,
   RedoIcon,
+  ResetIcon,
   UndoIcon,
 } from "./icons";
 import type { FishTemplate } from "./fishTemplates";
 import {
   BrushGroup,
-  BrushLabel,
   BrushRange,
+  BrushTrack,
+  CanvasHint,
   CanvasLayer,
   CanvasWrap,
-  ControlDivider,
-  ControlInnerDivider,
-  Controls,
-  ControlsRow,
   ColorDot,
+  CompleteButton,
+  Controls,
   CustomColorLabel,
   DrawingCanvas,
   EraserModeGroup,
@@ -26,10 +27,14 @@ import {
   IconButton,
   ModeChip,
   PaletteGroup,
+  RailCard,
+  RailSpacer,
   Screen,
+  SizeDot,
+  SizePreview,
   TemplateButton,
   TemplatesGroup,
-  ToolGroup,
+  ToolRow,
 } from "./DrawScreen.styles";
 
 type ColorOption = {
@@ -41,6 +46,7 @@ type DrawScreenProps = {
   tool: "pen" | "eraser" | "fill";
   eraserMode: "stroke" | "brush";
   color: string;
+  colorSource: "palette" | "custom";
   colors: ColorOption[];
   customColor: string;
   templates: FishTemplate[];
@@ -59,6 +65,7 @@ type DrawScreenProps = {
   onCustomColorChange: (value: string) => void;
   onBrushSizeChange: (value: number) => void;
   onSelectTemplate: (templateId: string) => void;
+  onReset: () => void;
   onComplete: () => void;
   onPointerDown: (event: PointerEvent<HTMLCanvasElement>) => void;
   onPointerMove: (event: PointerEvent<HTMLCanvasElement>) => void;
@@ -71,6 +78,7 @@ export const DrawScreen = ({
   tool,
   eraserMode,
   color,
+  colorSource,
   colors,
   customColor,
   templates,
@@ -89,6 +97,7 @@ export const DrawScreen = ({
   onCustomColorChange,
   onBrushSizeChange,
   onSelectTemplate,
+  onReset,
   onComplete,
   onPointerDown,
   onPointerMove,
@@ -96,16 +105,45 @@ export const DrawScreen = ({
   drawCanvasRef,
   frameCanvasRef,
 }: DrawScreenProps) => {
+  const isEraser = tool === "eraser";
   const isFill = tool === "fill";
-  const sizeLabel = tool === "eraser" ? "지우개" : "브러쉬";
+  const dotPx = Math.max(6, Math.min(26, brushSize * 0.6));
+
+  const handleEyedropperTool = async () => {
+    if (!("EyeDropper" in window)) return;
+    try {
+      const eyeDropper = new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper();
+      const { sRGBHex } = await eyeDropper.open();
+      onCustomColorChange(sRGBHex);
+      onToolChange("pen");
+    } catch {
+      // 사용자가 취소
+    }
+  };
 
   return (
     <Screen>
-      <Controls role="toolbar">
+      {/* 좌측 — 캔버스 수조 */}
+      <CanvasWrap $error={drawError}>
+        <CanvasLayer>
+          <FrameCanvas ref={frameCanvasRef} aria-hidden="true" />
+          <DrawingCanvas
+            ref={drawCanvasRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            onPointerCancel={onPointerUp}
+            style={{ cursor: isFill ? "pointer" : "crosshair" }}
+          />
+        </CanvasLayer>
+        {drawError && <CanvasHint>물고기를 그려주세요</CanvasHint>}
+      </CanvasWrap>
 
-        {/* 첫 번째 줄: 도구 + 팔레트 + 완료 */}
-        <ControlsRow>
-          <ToolGroup>
+      {/* 우측 — 도구 레일 */}
+      <Controls role="toolbar">
+        <RailCard>
+          <ToolRow>
             <IconButton
               type="button"
               onClick={onUndo}
@@ -122,7 +160,9 @@ export const DrawScreen = ({
             >
               <RedoIcon />
             </IconButton>
-            <ControlInnerDivider aria-hidden="true" />
+            <IconButton type="button" onClick={onReset} aria-label="초기화">
+              <ResetIcon />
+            </IconButton>
             <IconButton
               type="button"
               $active={tool === "pen"}
@@ -147,23 +187,32 @@ export const DrawScreen = ({
             >
               <FillIcon />
             </IconButton>
-          </ToolGroup>
+            {"EyeDropper" in window && (
+              <IconButton
+                type="button"
+                onClick={handleEyedropperTool}
+                aria-label="스포이드"
+              >
+                <EyeDropperIcon />
+              </IconButton>
+            )}
+          </ToolRow>
+        </RailCard>
 
-          <ControlDivider aria-hidden="true" />
-
+        <RailCard>
           <PaletteGroup>
             {colors.map((swatch) => (
               <ColorDot
                 key={swatch.value}
                 type="button"
-                $active={color === swatch.value}
+                $active={colorSource === "palette" && color === swatch.value}
                 style={{ backgroundColor: swatch.value }}
                 onClick={() => onColorChange(swatch.value)}
                 aria-label={`색상 ${swatch.name}`}
               />
             ))}
             <CustomColorLabel
-              $active={color === customColor}
+              $active={colorSource === "custom"}
               aria-label="커스텀 색상 선택"
             >
               <input
@@ -174,39 +223,35 @@ export const DrawScreen = ({
               />
             </CustomColorLabel>
           </PaletteGroup>
+        </RailCard>
 
-          <ControlDivider aria-hidden="true" />
-
-          <IconButton
-            type="button"
-            $primary
-            onClick={onComplete}
-            aria-label="완료"
-          >
-            <CheckIcon />
-          </IconButton>
-        </ControlsRow>
-
-        {/* 두 번째 줄: 브러쉬/지우개 설정 + 템플릿 */}
-        <ControlsRow>
+        <RailCard>
           <BrushGroup>
-            <BrushLabel htmlFor="brush-size">
-              {isFill ? "채우기" : sizeLabel}
-            </BrushLabel>
-            <BrushRange
-              id="brush-size"
-              type="range"
-              min={brushMin}
-              max={brushMax}
-              step={1}
-              value={brushSize}
-              onChange={(event) =>
-                onBrushSizeChange(Number(event.target.value))
-              }
-              aria-label={`${sizeLabel} 크기 조절`}
-              disabled={isFill}
-            />
-            {tool === "eraser" && (
+            <BrushTrack>
+              <BrushRange
+                id="brush-size"
+                type="range"
+                min={brushMin}
+                max={brushMax}
+                step={1}
+                value={brushSize}
+                onChange={(event) =>
+                  onBrushSizeChange(Number(event.target.value))
+                }
+                aria-label={`${isEraser ? "지우개" : "브러쉬"} 크기 조절`}
+                disabled={isFill}
+              />
+              <SizePreview>
+                <SizeDot
+                  style={{
+                    width: dotPx,
+                    height: dotPx,
+                    background: isEraser ? "rgba(234,242,255,0.4)" : color,
+                  }}
+                />
+              </SizePreview>
+            </BrushTrack>
+            {isEraser && (
               <EraserModeGroup role="group" aria-label="지우개 방식 선택">
                 <ModeChip
                   type="button"
@@ -225,7 +270,9 @@ export const DrawScreen = ({
               </EraserModeGroup>
             )}
           </BrushGroup>
+        </RailCard>
 
+        <RailCard>
           <TemplatesGroup>
             {templates.map((template) => (
               <TemplateButton
@@ -239,27 +286,14 @@ export const DrawScreen = ({
               </TemplateButton>
             ))}
           </TemplatesGroup>
-        </ControlsRow>
+        </RailCard>
 
+        <RailSpacer />
+
+        <CompleteButton type="button" onClick={onComplete} aria-label="완료">
+          <CheckIcon />
+        </CompleteButton>
       </Controls>
-
-      <CanvasWrap $error={drawError}>
-        <CanvasLayer>
-          <DrawingCanvas
-            ref={drawCanvasRef}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-            onPointerCancel={onPointerUp}
-          />
-          <FrameCanvas
-            ref={frameCanvasRef}
-            aria-hidden="true"
-          />
-
-        </CanvasLayer>
-      </CanvasWrap>
     </Screen>
   );
 };

@@ -59,7 +59,6 @@ export const FishWrapper = styled.div`
   z-index: 2;
   cursor: grab;
   will-change: left, top;
-  transform: translate(-50%, -50%);
 `;
 
 export const FishImage = styled.img`

@@ -23,7 +23,7 @@ const toastIn = keyframes`
 export const AppWrapper = styled.div`
   min-height: 100vh;
   overflow: hidden;
-  padding: 32px 8px;
+  padding: 14px 8px 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,10 +38,12 @@ export const AppWrapper = styled.div`
     content: "";
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(180deg, rgba(3, 17, 37, 0.16), rgba(3, 17, 37, 0.34)),
-      radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 28%);
+    background: rgba(0, 0, 0, 0.18);
     pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    padding: 12px 8px 20px;
   }
 `;
 
