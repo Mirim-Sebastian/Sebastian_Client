@@ -146,14 +146,14 @@ function moveFish(fish: Fish, t: number): Fish {
   let newWaveSpeed = fish.waveSpeed;
   const newWavePhase = fish.wavePhase + fish.waveSpeed * t;
 
-  const entering = fish.entering && (newX < 2 || newX > 92);
+  const entering = fish.entering && (newX < 5 || newX > 95);
   if (!entering) {
-    if (newX > 92) {
-      newX = 92;
+    if (newX > 97) {
+      newX = 97;
       newDirection = -1;
     }
-    if (newX < 2) {
-      newX = 2;
+    if (newX < 3) {
+      newX = 3;
       newDirection = 1;
     }
   }
@@ -168,12 +168,12 @@ function moveFish(fish: Fish, t: number): Fish {
     Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
   let newY = fish.y + (waveY + newVerticalVelocity) * t;
 
-  if (newY > 84) {
-    newY = 84;
+  if (newY > 92) {
+    newY = 92;
     newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
   }
-  if (newY < 8) {
-    newY = 8;
+  if (newY < 5) {
+    newY = 5;
     newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
   }
 
@@ -307,12 +307,12 @@ export default function OceanScreen() {
     const rect = oceanRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = Math.max(
-      2,
-      Math.min(92, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
+      3,
+      Math.min(97, ((e.clientX - rect.left) / rect.width) * 100 - drag.offsetX),
     );
     const y = Math.max(
-      8,
-      Math.min(84, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY),
+      5,
+      Math.min(92, ((e.clientY - rect.top) / rect.height) * 100 - drag.offsetY),
     );
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
     if (idx !== -1)

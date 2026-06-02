@@ -1,4 +1,201 @@
+<<<<<<< HEAD
+.app {
+  min-height: 100vh;
+  padding: 32px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-title {
+  margin: 12px;
+  text-align: center;
+  font-family: var(--title-font);
+  font-size: clamp(1.8rem, 2.6vw, 3.2rem);
+  letter-spacing: 0.02em;
+  font-size: 32px;
+}
+
+.screen {
+  width: min(1200px, 100%);
+  height: min(86vh, 900px);
+  display: grid;
+  gap: 18px;
+}
+
+.draw-screen {
+  grid-template-rows: auto 1fr;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-group.brush {
+  flex: 0 1 220px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.control-group.palette {
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.control-group.templates {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.icon-button {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.icon-button svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.icon-button.active {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: transparent;
+}
+
+.icon-button.primary {
+  background: var(--accent);
+  color: #041126;
+  border-color: transparent;
+}
+
+.icon-button.primary.error {
+  box-shadow: 0 0 0 2px var(--danger);
+}
+
+.icon-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.icon-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.color-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(2, 16, 32, 0.4);
+  cursor: pointer;
+}
+
+.color-dot.custom {
+  position: relative;
+  overflow: hidden;
+  background: conic-gradient(
+    #ff3b3b,
+    #ffb347,
+    #ffe066,
+    #7acb6e,
+    #38d9a9,
+    #4aa3ff,
+    #7b6cff,
+    #ff7ab6,
+    #ff3b3b
+  );
+}
+
+.color-dot.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.color-dot.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.color-picker-trigger {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(2, 16, 32, 0.38),
+    0 8px 18px rgba(2, 8, 20, 0.2);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: conic-gradient(
+    from 180deg,
+    #ff4d6d,
+    #ff9f1c,
+    #ffe66d,
+    #2ec4b6,
+    #4aa3ff,
+    #7b6cff,
+    #ff4d6d
+  );
+}
+
+.color-picker-trigger.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.color-picker-trigger::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.26);
+}
+
+.color-picker-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+=======
 /* 전역 유틸 - 사용 중인 레거시 클래스가 있을 경우를 대비해 남겨둠 */
+>>>>>>> 01724c3e4b5573e5e73bea22cedcb33809556f46
 .sr-only {
   position: absolute;
   width: 1px;
@@ -9,4 +206,240 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+<<<<<<< HEAD
 }
+
+.template-button {
+  width: 56px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(8, 20, 40, 0.7);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.template-button svg {
+  width: 44px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.template-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+.template-button.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.brush-label {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(230, 240, 255, 0.85);
+}
+
+.brush-value {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.brush-range {
+  width: min(220px, 100%);
+  accent-color: var(--accent);
+}
+
+.brush-range:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.canvas-wrap {
+  flex: 1;
+  background: rgba(4, 18, 38, 0.9);
+  border-radius: 22px;
+  padding: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(4, 17, 38, 0.2),
+    0 30px 80px rgba(2, 8, 20, 0.35);
+  min-height: 360px;
+}
+
+.canvas-wrap.error {
+  border-color: var(--danger);
+  animation: shake 0.35s ease;
+}
+
+.canvas-layer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  display: block;
+  touch-action: none;
+  position: absolute;
+  inset: 0;
+}
+
+.drawing-canvas {
+  background: transparent;
+  z-index: 2;
+}
+
+.frame-canvas {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.canvas-layer.fill-mode .drawing-canvas {
+  z-index: 1;
+}
+
+.canvas-layer.fill-mode .frame-canvas {
+  z-index: 2;
+}
+
+.name-screen {
+  grid-template-rows: 1fr auto auto;
+  place-items: center;
+}
+
+.preview {
+  width: min(640px, 86%);
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(4, 18, 38, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 60px rgba(2, 8, 20, 0.35);
+  display: flex;
+  justify-content: center;
+}
+
+.preview img {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+}
+
+.name-field {
+  width: min(420px, 80%);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.name-field.error {
+  border-color: var(--danger);
+  animation: shake 0.35s ease;
+}
+
+.name-field input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 1.6rem;
+  text-align: center;
+  outline: none;
+  letter-spacing: 0.08em;
+}
+
+.sent-screen {
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  padding-inline: 24px;
+}
+
+.sent-screen::before {
+  content: "";
+  position: absolute;
+  inset: 8% 18%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(56, 217, 169, 0.2), transparent 62%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.sent-title {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: clamp(1.7rem, 4.4vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0.02em;
+  color: #f7fbff;
+  text-shadow:
+    0 0 24px rgba(74, 163, 255, 0.35),
+    0 0 72px rgba(56, 217, 169, 0.22),
+    0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+}
+
+@media (max-width: 900px) {
+  .screen {
+    height: auto;
+  }
+
+  .controls {
+    justify-content: center;
+  }
+
+  .control-group.palette {
+    order: 3;
+  }
+
+  .canvas-wrap {
+    min-height: 300px;
+  }
+}
+=======
+}
+>>>>>>> 01724c3e4b5573e5e73bea22cedcb33809556f46
