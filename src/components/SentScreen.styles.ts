@@ -21,6 +21,10 @@ export const Screen = styled(BaseScreen)`
   padding-inline: 32px;
   text-align: center;
 
+  @media (max-width: 640px) {
+    padding-inline: 16px;
+  }
+
   /* 중앙 글로우 */
   &::before {
     content: "";
@@ -48,6 +52,11 @@ export const FishFloat = styled.div`
     max-height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.5));
+  }
+
+  @media (max-width: 480px) {
+    width: 160px;
+    height: 120px;
   }
 `;
 

@@ -73,6 +73,7 @@ export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
     place-items: center;
     font-size: 0.68rem;
     border: 1.5px solid rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
 
     ${({ $state }) =>
       $state === "on" &&
@@ -97,10 +98,22 @@ export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
     stroke: currentColor;
     stroke-width: 2.4;
   }
+
+  @media (max-width: 480px) {
+    font-size: 0;
+    gap: 0;
+    .num {
+      font-size: 0.64rem;
+    }
+  }
 `;
 
 export const StepLine = styled.div`
   width: 26px;
   height: 1.5px;
   background: rgba(255, 255, 255, 0.35);
+
+  @media (max-width: 480px) {
+    width: 14px;
+  }
 `;

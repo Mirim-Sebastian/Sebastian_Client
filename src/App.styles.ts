@@ -23,7 +23,7 @@ const toastIn = keyframes`
 export const AppWrapper = styled.div`
   min-height: 100vh;
   overflow: hidden;
-  padding: 32px 8px;
+  padding: 14px 8px 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,6 +42,9 @@ export const AppWrapper = styled.div`
     pointer-events: none;
   }
 
+  @media (max-width: 640px) {
+    padding: 12px 8px 20px;
+  }
 `;
 
 export const AppToast = styled.div`

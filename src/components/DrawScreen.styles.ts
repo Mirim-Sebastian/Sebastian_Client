@@ -1,5 +1,6 @@
 import styled, { css } from "styled-components";
 import { BaseScreen, shake, IconButton } from "./ui.styles";
+import bgOcean from "../assets/images/bg_ocean.jpg";
 
 export { IconButton };
 
@@ -8,14 +9,10 @@ const BLUE = "#ffffff";
 const BLUE_RGB = "255, 255, 255";
 
 // ─── Layout : 좌(수조 캔버스) · 우(도구 레일) ───────────────────────────────────
+// 사이드바는 최대 268px, 뷰포트가 좁아지면 비율에 맞게 줄어듦
 export const Screen = styled(BaseScreen)`
-  grid-template-columns: 1fr 268px;
-  gap: 20px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-  }
+  grid-template-columns: 1fr clamp(140px, 22vw, 268px);
+  gap: clamp(8px, 1.6vw, 20px);
 `;
 
 // ─── 캔버스 수조 (좌) ────────────────────────────────────────────────────────────
@@ -23,11 +20,9 @@ export const CanvasWrap = styled.div<{ $error: boolean }>`
   position: relative;
   border-radius: 26px;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(13, 44, 78, 0.35),
-    rgba(4, 16, 36, 0.48)
-  );
+  background-image: url(${bgOcean});
+  background-size: cover;
+  background-position: center;
   border: 1px solid
     ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.12)")};
   box-shadow:
@@ -41,6 +36,11 @@ export const CanvasWrap = styled.div<{ $error: boolean }>`
           ${shake} 0.36s ease
         `
       : "none"};
+
+  /* height: auto 구간(≤900px)에서 캔버스가 찌그러지지 않도록 */
+  @media (max-width: 900px) {
+    min-height: clamp(200px, calc(100svh - 240px), 520px);
+  }
 
   /* 유리 반사 */
   &::after {
@@ -115,11 +115,6 @@ export const Controls = styled.div`
     height: 34px;
     border-radius: 9px;
   }
-
-  @media (max-width: 900px) {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
 `;
 
 export const RailCard = styled.div`
@@ -162,17 +157,16 @@ export const RailSpacer = styled.div`
 `;
 
 // ─── 색상 팔레트 ─────────────────────────────────────────────────────────────────
+// auto-fill로 사이드바 너비에 맞게 자동 줄 바꿈
 export const PaletteGroup = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 40px);
-  column-gap: 2px;
-  row-gap: 8px;
-  justify-content: space-between;
+  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  gap: 4px;
 `;
 
 export const ColorDot = styled.button<{ $active: boolean }>`
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  aspect-ratio: 1;
   justify-self: center;
   border-radius: 50%;
   border: 2px solid
@@ -190,8 +184,8 @@ export const ColorDot = styled.button<{ $active: boolean }>`
 `;
 
 export const CustomColorLabel = styled.label<{ $active: boolean }>`
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  aspect-ratio: 1;
   justify-self: center;
   border-radius: 50%;
   position: relative;
@@ -243,6 +237,7 @@ export const BrushLabel = styled.label`
 
 export const BrushRange = styled.input`
   flex: 1;
+  min-width: 0;
   accent-color: ${BLUE};
   cursor: pointer;
 

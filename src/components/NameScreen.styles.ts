@@ -31,6 +31,12 @@ export const Screen = styled(BaseScreen)`
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  @media (max-width: 480px) {
+    border-radius: 20px;
+    box-shadow: 0 16px 48px rgba(2, 8, 20, 0.45);
   }
 `;
 
@@ -44,6 +50,16 @@ export const Tank = styled.div`
     rgba(3, 12, 28, 0.5)
   );
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+
+  @media (max-width: 900px) {
+    height: clamp(180px, 42vw, 260px);
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 export const Specimen = styled.div`
@@ -118,6 +134,14 @@ export const Placard = styled.div`
   flex-direction: column;
   padding: 30px 40px 26px;
   min-height: 0;
+
+  @media (max-width: 900px) {
+    padding: 24px 28px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px 16px;
+  }
 `;
 
 export const Rule = styled.div`
@@ -138,11 +162,16 @@ export const Eyebrow = styled.p`
 export const Title = styled.h1`
   font-family: var(--title-font);
   margin: 20px 0 16px;
-  font-size: clamp(24px, 2.7vw, 32px);
+  font-size: clamp(20px, 2.7vw, 32px);
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.03em;
   color: #f4faff;
+
+  @media (max-width: 640px) {
+    margin: 14px 0 12px;
+    font-size: clamp(18px, 5.5vw, 26px);
+  }
 `;
 
 export const Lead = styled.p`
