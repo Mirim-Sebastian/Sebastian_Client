@@ -62,8 +62,9 @@ export const ResetIcon = () => (
 
 export const EyeDropperIcon = () => (
   <svg className="line-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 3l1.5 1.5-1 1L15 8l4-4-2.5-2.5A2 2 0 0013.5 1L12 3z" strokeLinejoin="round" />
-    <path d="M9 6l-5.5 5.5a2 2 0 000 2.83L6 16.83 4.5 18.5 6 20l1.5-1.5 2.5 2.5a2 2 0 002.83 0L18 15l-9-9z" strokeLinejoin="round" />
+    <path d="m2 22 1-1h3l9-9" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3 21v-3l9-9" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 
