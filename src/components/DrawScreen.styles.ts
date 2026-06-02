@@ -1,6 +1,5 @@
 import styled, { css } from "styled-components";
 import { BaseScreen, shake, IconButton } from "./ui.styles";
-import bgOcean from "../assets/images/bg_ocean.jpg";
 
 export { IconButton };
 
@@ -20,9 +19,8 @@ export const CanvasWrap = styled.div<{ $error: boolean }>`
   position: relative;
   border-radius: 26px;
   overflow: hidden;
-  background-image: url(${bgOcean});
-  background-size: cover;
-  background-position: center;
+  background: rgba(9, 28, 54, 0.18);
+  backdrop-filter: blur(16px);
   border: 1px solid
     ${({ $error }) => ($error ? "var(--danger)" : "rgba(255, 255, 255, 0.12)")};
   box-shadow:
@@ -118,7 +116,7 @@ export const Controls = styled.div`
 `;
 
 export const RailCard = styled.div`
-  background: rgba(9, 28, 54, 0.38);
+  background: rgba(9, 28, 54, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 9px;
