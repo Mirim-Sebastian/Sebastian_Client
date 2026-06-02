@@ -60,6 +60,13 @@ export const ResetIcon = () => (
   </svg>
 )
 
+export const EyeDropperIcon = () => (
+  <svg className="line-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3l1.5 1.5-1 1L15 8l4-4-2.5-2.5A2 2 0 0013.5 1L12 3z" strokeLinejoin="round" />
+    <path d="M9 6l-5.5 5.5a2 2 0 000 2.83L6 16.83 4.5 18.5 6 20l1.5-1.5 2.5 2.5a2 2 0 002.83 0L18 15l-9-9z" strokeLinejoin="round" />
+  </svg>
+)
+
 export const SpinnerIcon = () => (
   <svg className="spinner line-icon" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="9" strokeWidth="2" opacity="0.3" />
