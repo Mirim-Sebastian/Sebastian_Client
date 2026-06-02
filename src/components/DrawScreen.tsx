@@ -1,4 +1,4 @@
-import type { PointerEvent, RefObject } from "react";
+import type { MouseEvent, PointerEvent, RefObject } from "react";
 import {
   CheckIcon,
   EraserIcon,
@@ -108,6 +108,19 @@ export const DrawScreen = ({
   const isFill = tool === "fill";
   const dotPx = Math.max(6, Math.min(26, brushSize * 0.6));
 
+  const handleEyedropperClick = async (e: MouseEvent) => {
+    if (!("EyeDropper" in window)) return;
+    e.preventDefault();
+    try {
+      const eyeDropper = new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper();
+      const { sRGBHex } = await eyeDropper.open();
+      onCustomColorChange(sRGBHex);
+      if (isEraser) onToolChange("pen");
+    } catch {
+      // 사용자가 취소
+    }
+  };
+
   return (
     <Screen>
       {/* 좌측 — 캔버스 수조 */}
@@ -191,7 +204,8 @@ export const DrawScreen = ({
             ))}
             <CustomColorLabel
               $active={colorSource === "custom"}
-              aria-label="커스텀 색상 선택"
+              aria-label="스포이드 / 커스텀 색상 선택"
+              onClick={handleEyedropperClick}
             >
               <input
                 type="color"
