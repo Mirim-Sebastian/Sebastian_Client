@@ -1,7 +1,5 @@
 import styled, { keyframes, css } from "styled-components";
-import { BaseScreen, shake, spin, IconButton } from "./ui.styles";
-
-export { IconButton } from "./ui.styles";
+import { BaseScreen, shake, spin } from "./ui.styles";
 
 // ─── Accent (블루로 확정) ──────────────────────────────────────────────────────
 const BLUE = "#ffffff";
@@ -21,22 +19,11 @@ const causticShift = keyframes`
 export const Screen = styled(BaseScreen)`
   display: grid;
   grid-template-columns: 1.32fr 1fr;
-  gap: 0;
-  overflow: hidden;
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(6, 18, 40, 0.35);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 30px 80px rgba(2, 8, 20, 0.45);
+  gap: clamp(8px, 1.6vw, 20px);
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-  }
-
-  @media (max-width: 480px) {
-    border-radius: 20px;
-    box-shadow: 0 16px 48px rgba(2, 8, 20, 0.45);
   }
 `;
 
@@ -44,17 +31,17 @@ export const Screen = styled(BaseScreen)`
 export const Tank = styled.div`
   position: relative;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(13, 44, 78, 0.38),
-    rgba(3, 12, 28, 0.5)
-  );
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 26px;
+  background: rgba(9, 28, 54, 0.18);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    0 30px 70px rgba(2, 8, 20, 0.4);
 
   @media (max-width: 900px) {
     height: clamp(180px, 42vw, 260px);
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   @media (max-width: 480px) {
@@ -134,6 +121,13 @@ export const Placard = styled.div`
   flex-direction: column;
   padding: 30px 40px 26px;
   min-height: 0;
+  border-radius: 16px;
+  background: rgba(9, 28, 54, 0.18);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 10px 30px rgba(2, 8, 20, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   @media (max-width: 900px) {
     padding: 24px 28px 20px;
