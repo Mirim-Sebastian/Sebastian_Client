@@ -451,7 +451,6 @@ function App() {
   const handleTemplateSelect = (templateId: string) => {
     if (step !== "draw") return;
     setSelectedTemplateId(templateId);
-    resetDrawing();
     setTool("pen");
   };
 
