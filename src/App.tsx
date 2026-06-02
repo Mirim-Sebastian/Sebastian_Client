@@ -162,11 +162,16 @@ function App() {
     redrawCanvas(actions);
   };
 
+  const MAX_HISTORY = 30;
+
   const commitActions = (actions: DrawAction[]) => {
     const next = cloneActions(actions);
     setActions(next);
     setCanvasHint(null);
     historyRef.current.push(cloneActions(next));
+    if (historyRef.current.length > MAX_HISTORY + 1) {
+      historyRef.current = historyRef.current.slice(-MAX_HISTORY - 1);
+    }
     redoHistoryRef.current = [];
     setCanUndo(historyRef.current.length > 1);
     setCanRedo(false);
