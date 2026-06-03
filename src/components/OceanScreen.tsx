@@ -33,6 +33,7 @@ interface Fish {
   scale: number;
   entering: boolean;
   dragging?: boolean;
+  protected?: boolean;
 }
 
 interface Shark {
@@ -43,6 +44,7 @@ interface Shark {
   exitDir: 1 | -1;
   phase: "chase" | "exit";
   mouthOpen: boolean;
+  eatenCount: number;
 }
 
 interface Bubble {
@@ -117,6 +119,7 @@ function makeFish(
   },
   id: number,
   isNew = false,
+  isProtected = false,
 ): Fish {
   const fromRight = Math.random() < 0.5;
   return {
@@ -134,6 +137,7 @@ function makeFish(
     waveSpeed: 0.05 + Math.random() * 0.08,
     scale: FISH_SIZE_MAP[data.size ?? "medium"] ?? 250,
     entering: isNew,
+    protected: isProtected,
   };
 }
 
@@ -205,6 +209,7 @@ function tickShark(
 ): { next: Shark | null; fish: Fish[] } {
   let { x, y, direction, phase, targetId, mouthOpen } = shark;
   const { exitDir } = shark;
+  let eatenCount = shark.eatenCount;
   let nextFish = fish;
 
   if (phase === "chase" && targetId !== null) {
@@ -217,10 +222,17 @@ function tickShark(
       if (dist < SHARK_EAT_DIST) {
         onEat(target);
         nextFish = fish.filter((f) => f.id !== targetId);
-        phase = "exit";
-        targetId = null;
+        eatenCount += 1;
         mouthOpen = false;
-        x += exitDir * SHARK_SPEED * t;
+        const nextTargets = nextFish.filter((f) => !f.protected);
+        if (eatenCount < 5 && nextTargets.length > 0) {
+          const next = nextTargets[Math.floor(Math.random() * nextTargets.length)];
+          targetId = next.id;
+        } else {
+          phase = "exit";
+          targetId = null;
+          x += exitDir * SHARK_SPEED * t;
+        }
       } else {
         x += (dx / dist) * SHARK_SPEED * t;
         y += (dy / dist) * SHARK_SPEED * t;
@@ -238,7 +250,7 @@ function tickShark(
 
   if (x > 130 || x < -30) return { next: null, fish: nextFish };
   return {
-    next: { x, y, direction, exitDir, phase, targetId, mouthOpen },
+    next: { x, y, direction, exitDir, phase, targetId, mouthOpen, eatenCount },
     fish: nextFish,
   };
 }
@@ -248,7 +260,8 @@ function tickShark(
 export default function OceanScreen() {
   const socketRef    = useRef<WebSocket | null>(null);
   const fishListRef  = useRef<Fish[]>([]);
-  const sharkRef     = useRef<Shark | null>(null);
+  const sharkRef          = useRef<Shark | null>(null);
+  const sharkThresholdRef = useRef(0);
   const oceanRef     = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const fishDomRefs  = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -259,7 +272,7 @@ export default function OceanScreen() {
   const [fishList, setFishList] = useState<Fish[]>([]);
   const [shark, setShark] = useState<Shark | null>(null);
   const [bubbles] = useState<Bubble[]>(generateBubbles);
-  const [activeFishId, setActiveFishId] = useState<number | null>(null);
+  const [activeFishIds, setActiveFishIds] = useState<Set<number>>(new Set());
   const [clickBubbles, setClickBubbles] = useState<ClickBubbleData[]>([]);
 
   // ─── Drag ──────────────────────────────────────────────────────────────────
@@ -354,7 +367,12 @@ export default function OceanScreen() {
         ...fishListRef.current[idx],
         dragging: false,
       };
-    if (!drag.active && message) setActiveFishId(fishId);
+    if (!drag.active && message) {
+      setActiveFishIds((prev) => new Set(prev).add(fishId));
+      window.setTimeout(() => {
+        setActiveFishIds((prev) => { const next = new Set(prev); next.delete(fishId); return next; });
+      }, 3000);
+    }
     dragStateRef.current = null;
   };
 
@@ -404,7 +422,7 @@ export default function OceanScreen() {
   useEffect(() => {
     getFishes()
       .then((fishes) => {
-        const loaded = fishes.slice(-MAX_FISH).map((f, i) => makeFish(f, i));
+        const loaded = fishes.slice(-MAX_FISH).map((f, i) => makeFish(f, i, false, true));
         fishListRef.current = loaded;
         setFishList(loaded);
       })
@@ -423,7 +441,31 @@ export default function OceanScreen() {
         if (!unmounted) setTimeout(connect, 2000);
       };
       ws.onmessage = (event: MessageEvent<string>) => {
-        const msg = JSON.parse(event.data) as { data?: Parameters<typeof makeFish>[0] };
+        const msg = JSON.parse(event.data) as { type?: string; data?: Parameters<typeof makeFish>[0] };
+
+        if (msg.type === "SPAWN_SHARK") {
+          if (!sharkRef.current) {
+            const targets = fishListRef.current.filter((f) => !f.protected);
+            if (targets.length > 0) {
+              const target = targets[Math.floor(Math.random() * targets.length)];
+              const fromRight = Math.random() < 0.5;
+              sharkRef.current = {
+                x: fromRight ? 130 : -30,
+                y: target.y,
+                targetId: target.id,
+                direction: fromRight ? -1 : 1,
+                exitDir: fromRight ? -1 : 1,
+                phase: "chase",
+                mouthOpen: false,
+                eatenCount: 0,
+              };
+              prevMouthRef.current = false;
+              setShark(sharkRef.current);
+            }
+          }
+          return;
+        }
+
         const newFish = makeFish(msg.data ?? (msg as unknown as Parameters<typeof makeFish>[0]), Date.now(), true);
         let next = [...fishListRef.current, newFish];
         if (next.length > MAX_FISH) next = next.slice(next.length - MAX_FISH);
@@ -460,7 +502,7 @@ export default function OceanScreen() {
 
       if (currentShark) {
         const result = tickShark(currentShark, fish, t, (eaten) => {
-          if (eaten.dbId) deleteFish(eaten.dbId).catch(console.error);
+          if (eaten.dbId && !eaten.protected) deleteFish(eaten.dbId).catch(console.error);
         });
         fish = result.fish;
         sharkRef.current = result.next;
@@ -503,23 +545,14 @@ export default function OceanScreen() {
     return () => cancelAnimationFrame(rafId);
   }, []);
 
-  useEffect(() => {
-    if (activeFishId === null) return;
-    const t = window.setTimeout(
-      () => setActiveFishId((id) => (id === activeFishId ? null : id)),
-      3000,
-    );
-    return () => window.clearTimeout(t);
-  }, [activeFishId]);
 
   // ─── Debug ─────────────────────────────────────────────────────────────────
 
   const spawnShark = () => {
-    if (sharkRef.current || fishListRef.current.length === 0) return;
-    const target =
-      fishListRef.current[
-        Math.floor(Math.random() * fishListRef.current.length)
-      ];
+    if (sharkRef.current) return;
+    const targets = fishListRef.current.filter((f) => !f.protected);
+    if (targets.length === 0) return;
+    const target = targets[Math.floor(Math.random() * targets.length)];
     const fromRight = Math.random() < 0.5;
     const newShark: Shark = {
       x: fromRight ? 130 : -30,
@@ -529,11 +562,22 @@ export default function OceanScreen() {
       exitDir: fromRight ? -1 : 1,
       phase: "chase",
       mouthOpen: false,
+      eatenCount: 0,
     };
     sharkRef.current = newShark;
     prevMouthRef.current = false;
-    setShark(newShark); // triggers React to mount SharkWrapper, then DOM updates take over
+    setShark(newShark);
   };
+
+  // 물고기가 30의 배수를 새로 넘을 때마다 상어 소환
+  useEffect(() => {
+    const count = fishList.length;
+    const threshold = Math.floor(count / 30) * 30;
+    if (threshold > 0 && threshold > sharkThresholdRef.current && !sharkRef.current) {
+      sharkThresholdRef.current = threshold;
+      spawnShark();
+    }
+  }, [fishList.length]); // spawnShark는 ref만 사용해 안정적
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -565,7 +609,7 @@ export default function OceanScreen() {
           onPointerUp={() => handlePointerUp(fish.id, fish.message)}
           style={{ width: `${fish.scale}px` } as CSSProperties}
         >
-          {activeFishId === fish.id && (
+          {activeFishIds.has(fish.id) && (
             <FishSpeechBubble>{fish.message}</FishSpeechBubble>
           )}
           <FishImage src={fish.image} alt={fish.name} />
@@ -595,20 +639,6 @@ export default function OceanScreen() {
           />
         </SharkWrapper>
       )}
-
-      {/* TEST BUTTON - 나중에 삭제 */}
-      <button
-        onClick={spawnShark}
-        style={{
-          position: "fixed",
-          bottom: 16,
-          right: 16,
-          zIndex: 99,
-          padding: "8px 16px",
-        }}
-      >
-        🦈 상어 호출
-      </button>
 
       {clickBubbles.map((cb) => (
         <ClickBubble
