@@ -81,6 +81,7 @@ interface DragState {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BUBBLE_COUNT = 18;
+const BUBBLE_SOUND_PATHS = ["/bubble1.mp3", "/bubble2.mp3"] as const;
 const SHARK_SPEED = 1.2;
 const SHARK_EAT_DIST = 13;
 const SHARK_MOUTH_DIST = 20;
@@ -427,7 +428,16 @@ export default function OceanScreen() {
 
   // ─── Click bubbles ─────────────────────────────────────────────────────────
 
+  const playRandomBubbleSound = () => {
+    const src =
+      BUBBLE_SOUND_PATHS[Math.floor(Math.random() * BUBBLE_SOUND_PATHS.length)];
+    const audio = new Audio(src);
+    audio.volume = 0.7;
+    audio.play().catch(() => {});
+  };
+
   const handleOceanClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    playRandomBubbleSound();
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;

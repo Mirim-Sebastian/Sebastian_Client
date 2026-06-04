@@ -1,4 +1,4 @@
-import type { MouseEvent, PointerEvent, RefObject } from "react";
+import type { PointerEvent, RefObject } from "react";
 import {
   CheckIcon,
   EraserIcon,
