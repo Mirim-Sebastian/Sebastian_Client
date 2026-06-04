@@ -30,6 +30,7 @@ interface Fish {
   verticalVelocity: number;
   wavePhase: number;
   waveSpeed: number;
+  yPhase: number;
   scale: number;
   entering: boolean;
   dragging?: boolean;
@@ -84,15 +85,15 @@ const SHARK_SPEED = 1.2;
 const SHARK_EAT_DIST = 13;
 const SHARK_MOUTH_DIST = 20;
 const SHARK_Y_OFFSET = -12;
-const SHARK_SIZE = 480;
+const SHARK_SIZE = 360;
 const MAX_FISH = 250;
 const WS_URL =
   (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
 
 const FISH_SIZE_MAP: Record<string, number> = {
-  small: 200,
-  medium: 250,
-  large: 300,
+  small: 130,
+  medium: 170,
+  large: 220,
 };
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -135,6 +136,7 @@ function makeFish(
     verticalVelocity: (Math.random() - 0.5) * 0.08,
     wavePhase: Math.random() * Math.PI * 2,
     waveSpeed: 0.05 + Math.random() * 0.08,
+    yPhase: Math.random() * Math.PI * 2,
     scale: FISH_SIZE_MAP[data.size ?? "medium"] ?? 250,
     entering: isNew,
     protected: isProtected,
@@ -154,8 +156,7 @@ function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
 
   let newDirection = fish.direction;
   let newX = fish.x + fish.speed * newDirection * t;
-  let newVerticalVelocity = fish.verticalVelocity;
-  let newWaveSpeed = fish.waveSpeed;
+  const newWaveSpeed = fish.waveSpeed;
   const newWavePhase = fish.wavePhase + fish.waveSpeed * t;
 
   const entering = fish.entering && (newX < 5 || newX > 95);
@@ -170,24 +171,16 @@ function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
     }
   }
 
-  if (Math.random() < 0.018 * t) {
-    newVerticalVelocity = (Math.random() - 0.5) * 0.12;
-    newWaveSpeed = 0.035 + Math.random() * 0.1;
-  }
+  // 모든 물고기 동일 주기(yPhase)로 규칙적인 수직 이동
+  const Y_SPEED = 0.022; // 전 물고기 공통 수직 주기
+  const newYPhase = fish.yPhase + Y_SPEED * t;
+  const waveY = Math.sin(newYPhase) * 0.22;
+  let newY = fish.y + waveY * t;
 
-  const waveY =
-    Math.sin(newWavePhase) * 0.06 +
-    Math.sin(newWavePhase * 0.43 + fish.id) * 0.04;
-  let newY = fish.y + (waveY + newVerticalVelocity) * t;
+  const newVerticalVelocity = waveY;
 
-  if (newY > yMax) {
-    newY = yMax;
-    newVerticalVelocity = -Math.abs(newVerticalVelocity || 0.05);
-  }
-  if (newY < yMin) {
-    newY = yMin;
-    newVerticalVelocity = Math.abs(newVerticalVelocity || 0.05);
-  }
+  if (newY > yMax) newY = yMax;
+  if (newY < yMin) newY = yMin;
 
   return {
     ...fish,
@@ -197,8 +190,56 @@ function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
     verticalVelocity: newVerticalVelocity,
     wavePhase: newWavePhase,
     waveSpeed: newWaveSpeed,
+    yPhase: newYPhase,
     entering,
   };
+}
+
+function resolveCollisions(fish: Fish[], ow: number, oh: number): Fish[] {
+  if (fish.length < 2) return fish;
+  let result = fish;
+
+  for (let i = 0; i < result.length; i++) {
+    for (let j = i + 1; j < result.length; j++) {
+      const a = result[i];
+      const b = result[j];
+      if (a.dragging || b.dragging || a.entering || b.entering) continue;
+
+      const awPct = ow > 0 ? (a.scale / ow) * 100 : 15;
+      const bwPct = ow > 0 ? (b.scale / ow) * 100 : 15;
+      const ahPct = oh > 0 ? (a.scale * 0.55 / oh) * 100 : 8;
+      const bhPct = oh > 0 ? (b.scale * 0.55 / oh) * 100 : 8;
+
+      const dx = (b.x + bwPct * 0.5) - (a.x + awPct * 0.5);
+      const dy = (b.y + bhPct * 0.5) - (a.y + ahPct * 0.5);
+
+      // AABB: x·y 각각 겹치는지 확인
+      if (Math.abs(dx) < (awPct + bwPct) * 0.5 && Math.abs(dy) < (ahPct + bhPct) * 0.65) {
+        const relVx = a.speed * a.direction - b.speed * b.direction;
+        const aVy = Math.sin(a.yPhase) * 0.22;
+        const bVy = Math.sin(b.yPhase) * 0.22;
+        const relVy = aVy - bVy;
+
+        const bounceX = relVx * dx > 0;
+        const bounceY = relVy * dy > 0;
+
+        if (bounceX || bounceY) {
+          if (result === fish) result = [...fish];
+          result[i] = {
+            ...result[i],
+            direction: bounceX ? (-a.direction) as 1 | -1 : a.direction,
+            yPhase: bounceY ? a.yPhase + Math.PI : a.yPhase,
+          };
+          result[j] = {
+            ...result[j],
+            direction: bounceX ? (-b.direction) as 1 | -1 : b.direction,
+            yPhase: bounceY ? b.yPhase + Math.PI : b.yPhase,
+          };
+        }
+      }
+    }
+  }
+  return result;
 }
 
 function tickShark(
@@ -275,6 +316,8 @@ export default function OceanScreen() {
   const [activeFishIds, setActiveFishIds] = useState<Set<number>>(new Set());
   const [clickBubbles, setClickBubbles] = useState<ClickBubbleData[]>([]);
 
+  const topFishElRef = useRef<HTMLDivElement | null>(null);
+
   // ─── Drag ──────────────────────────────────────────────────────────────────
 
   const activateDrag = (fishId: number) => {
@@ -291,6 +334,12 @@ export default function OceanScreen() {
     if (el) {
       el.style.cursor = "grabbing";
       el.style.transition = "none";
+      // 이전 최상단 물고기 z-index 초기화 후 현재 물고기를 최상단으로
+      if (topFishElRef.current && topFishElRef.current !== el) {
+        topFishElRef.current.style.zIndex = "";
+      }
+      el.style.zIndex = "10";
+      topFishElRef.current = el;
     }
     const idx = fishListRef.current.findIndex((f) => f.id === fishId);
     if (idx !== -1)
@@ -498,6 +547,7 @@ export default function OceanScreen() {
       const oh = oceanEl.offsetHeight;
 
       let fish = fishListRef.current.map((f) => moveFish(f, t, ow, oh));
+      fish = resolveCollisions(fish, ow, oh);
       const currentShark = sharkRef.current;
 
       if (currentShark) {
