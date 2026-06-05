@@ -176,3 +176,83 @@ export const OceanBubble = styled.div`
   animation-iteration-count: infinite;
   animation-fill-mode: both;
 `;
+
+export const MagnifierOuter = styled.div`
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  z-index: 20;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+
+  &:active { cursor: grabbing; }
+`;
+
+/* z-index: 2 — ring sits ON TOP of handle so the border hides the join */
+export const MagnifierRing = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 9px solid #e8e0d0;
+  box-shadow:
+    0 0 0 3px #b09050,
+    0 0 0 5px #7a6030,
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    inset 0 2px 6px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+`;
+
+export const MagnifierGlint = styled.div`
+  position: absolute;
+  top: 9%;
+  left: 13%;
+  width: 36%;
+  height: 24%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 35% 35%,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.12) 55%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transform: rotate(-20deg);
+`;
+
+/* 4:30(135°) 위치, 같은 방향(SE 45°)으로 대각선 뻗는 손잡이. */
+export const MagnifierHandle = styled.div`
+  position: absolute;
+  z-index: 1;
+  width: 26px;
+  height: 90px;
+  border-radius: 13px;
+  top: 210px;            /* 4:30 위치, 링 내부 12px 겹침 */
+  left: 209px;           /* 222 − 13 */
+  transform: rotate(-45deg);
+  transform-origin: top center;
+  background: linear-gradient(
+    to right,
+    #5a3800,
+    #c88010 28%,
+    #f0c050 50%,
+    #c88010 72%,
+    #5a3800
+  );
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    inset 0 1px 3px rgba(255, 220, 100, 0.45);
+  pointer-events: none;
+`;
