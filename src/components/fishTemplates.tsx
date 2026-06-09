@@ -1,5 +1,7 @@
 import type { ReactNode } from "react"
+import blowfishUrl from "../assets/images/frame/blowfish.png"
 import boxfishUrl from "../assets/images/frame/boxfish.png"
+import fishUrl from "../assets/images/frame/fish.png"
 import goldfishUrl from "../assets/images/frame/goldfish.png"
 import hippocampusUrl from "../assets/images/frame/hippocampus.png"
 import jellyfishUrl from "../assets/images/frame/jellyfish.png"
@@ -65,5 +67,15 @@ export const FISH_TEMPLATES: FishTemplate[] = [
     id: "spinyfish",
     icon: <img src={spinyfishUrl} alt="가시복어" />,
     imageUrl: spinyfishUrl,
+  },
+  {
+    id: "blowfish",
+    icon: <img src={blowfishUrl} alt="복어" />,
+    imageUrl: blowfishUrl,
+  },
+  {
+    id: "fish",
+    icon: <img src={fishUrl} alt="물고기" />,
+    imageUrl: fishUrl,
   },
 ]
