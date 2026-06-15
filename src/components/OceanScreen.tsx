@@ -210,54 +210,8 @@ function moveFish(fish: Fish, t: number, ow: number, oh: number): Fish {
   };
 }
 
-function resolveCollisions(fish: Fish[], ow: number, oh: number): Fish[] {
-  if (fish.length < 2) return fish;
-  let result = fish;
-
-  for (let i = 0; i < result.length; i++) {
-    for (let j = i + 1; j < result.length; j++) {
-      const a = result[i];
-      const b = result[j];
-      if (a.dragging || b.dragging || a.entering || b.entering) continue;
-
-      const awPct = ow > 0 ? (a.scale / ow) * 100 : 15;
-      const bwPct = ow > 0 ? (b.scale / ow) * 100 : 15;
-      const ahPct = oh > 0 ? ((a.scale * 0.55) / oh) * 100 : 8;
-      const bhPct = oh > 0 ? ((b.scale * 0.55) / oh) * 100 : 8;
-
-      const dx = b.x + bwPct * 0.5 - (a.x + awPct * 0.5);
-      const dy = b.y + bhPct * 0.5 - (a.y + ahPct * 0.5);
-
-      // AABB: x·y 각각 겹치는지 확인
-      if (
-        Math.abs(dx) < (awPct + bwPct) * 0.5 &&
-        Math.abs(dy) < (ahPct + bhPct) * 0.65
-      ) {
-        const relVx = a.speed * a.direction - b.speed * b.direction;
-        const aVy = Math.sin(a.yPhase) * 0.22;
-        const bVy = Math.sin(b.yPhase) * 0.22;
-        const relVy = aVy - bVy;
-
-        const bounceX = relVx * dx > 0;
-        const bounceY = relVy * dy > 0;
-
-        if (bounceX || bounceY) {
-          if (result === fish) result = [...fish];
-          result[i] = {
-            ...result[i],
-            direction: bounceX ? (-a.direction as 1 | -1) : a.direction,
-            yPhase: bounceY ? a.yPhase + Math.PI : a.yPhase,
-          };
-          result[j] = {
-            ...result[j],
-            direction: bounceX ? (-b.direction as 1 | -1) : b.direction,
-            yPhase: bounceY ? b.yPhase + Math.PI : b.yPhase,
-          };
-        }
-      }
-    }
-  }
-  return result;
+function resolveCollisions(fish: Fish[]): Fish[] {
+  return fish;
 }
 
 function tickShark(
@@ -655,7 +609,7 @@ export default function OceanScreen() {
       const oh = oceanEl.offsetHeight;
 
       let fish = fishListRef.current.map((f) => moveFish(f, t, ow, oh));
-      fish = resolveCollisions(fish, ow, oh);
+      fish = resolveCollisions(fish);
       const currentShark = sharkRef.current;
 
       if (currentShark) {
