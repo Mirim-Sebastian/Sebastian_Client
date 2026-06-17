@@ -119,9 +119,9 @@ export const Placard = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 30px 40px 26px;
+  padding: clamp(24px, 2.2vw, 56px) clamp(28px, 2.8vw, 68px) clamp(20px, 1.8vw, 44px);
   min-height: 0;
-  border-radius: 16px;
+  border-radius: clamp(14px, 1.4vw, 26px);
   background: rgba(9, 28, 54, 0.18);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -155,8 +155,8 @@ export const Eyebrow = styled.p`
 
 export const Title = styled.h1`
   font-family: var(--title-font);
-  margin: 20px 0 16px;
-  font-size: clamp(20px, 2.7vw, 32px);
+  margin: clamp(16px, 1.8vh, 30px) 0 clamp(12px, 1.4vh, 22px);
+  font-size: clamp(20px, 2.2vw, 52px);
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.03em;
@@ -178,7 +178,7 @@ export const Lead = styled.p`
 export const Rows = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(14px, 1.6vw, 30px);
 `;
 
 export const Row = styled.div<{ $error?: boolean }>`
@@ -200,7 +200,7 @@ export const Row = styled.div<{ $error?: boolean }>`
 `;
 
 export const Label = styled.label`
-  font-size: 10.5px;
+  font-size: clamp(10px, 0.85vw, 15px);
   font-weight: 800;
   letter-spacing: 0.2em;
   color: rgba(234, 242, 255, 0.34);
@@ -237,14 +237,14 @@ const underline = css`
 
 export const NameInput = styled.input`
   ${underline};
-  font-size: 18px;
+  font-size: clamp(16px, 1.5vw, 30px);
   font-weight: 600;
 `;
 
 export const MessageInput = styled.textarea`
   ${underline};
   font-family: var(--title-font);
-  font-size: 18px;
+  font-size: clamp(16px, 1.5vw, 30px);
   font-weight: 600;
   resize: none;
   line-height: 1.5;
@@ -258,14 +258,14 @@ export const SizeSeg = styled.div`
 
 export const SizeSegButton = styled.button<{ $active: boolean }>`
   flex: 1;
-  padding: 11px 0;
-  border-radius: 11px;
+  padding: clamp(9px, 1vw, 18px) 0;
+  border-radius: clamp(9px, 0.9vw, 16px);
   border: 1px solid
     ${({ $active }) => ($active ? BLUE : "rgba(255, 255, 255, 0.12)")};
   background: ${({ $active }) =>
     $active ? `rgba(${BLUE_RGB}, 0.14)` : "rgba(255, 255, 255, 0.03)"};
   color: ${({ $active }) => ($active ? BLUE : "rgba(234, 242, 255, 0.34)")};
-  font-size: 14px;
+  font-size: clamp(13px, 1.1vw, 21px);
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -280,26 +280,26 @@ export const SizeSegButton = styled.button<{ $active: boolean }>`
 // ─── 하단 액션 ───────────────────────────────────────────────────────────────────
 export const Foot = styled.div`
   margin-top: auto;
-  padding-top: 22px;
+  padding-top: clamp(18px, 2vh, 40px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(10px, 1vh, 18px);
 `;
 
 export const SendButton = styled.button<{ $error?: boolean }>`
   width: 100%;
-  height: 56px;
-  border-radius: 15px;
+  height: clamp(52px, 5.5vh, 84px);
+  border-radius: clamp(13px, 1.2vw, 20px);
   border: none;
   background: rgba(255, 255, 255, 0.92);
   color: #04162e;
-  font-size: 17px;
+  font-size: clamp(15px, 1.4vw, 24px);
   font-weight: 800;
   letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: clamp(8px, 0.8vw, 14px);
   cursor: pointer;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
   transition:
@@ -340,10 +340,10 @@ export const BackLink = styled.button`
   background: none;
   border: none;
   color: rgba(234, 242, 255, 0.34);
-  font-size: 13.5px;
+  font-size: clamp(12px, 1.1vw, 20px);
   font-weight: 600;
   letter-spacing: 0.04em;
-  padding: 4px;
+  padding: clamp(4px, 0.4vh, 8px);
   cursor: pointer;
 
   &:not(:disabled):hover {

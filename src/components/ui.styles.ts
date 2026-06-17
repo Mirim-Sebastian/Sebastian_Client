@@ -19,10 +19,10 @@ export const spin = keyframes`
 export const BaseScreen = styled.div`
   position: relative;
   z-index: 1;
-  width: min(1200px, 100%);
-  height: min(86svh, 900px);
+  width: min(clamp(1200px, 80vw, 2300px), calc(100% - clamp(16px, 4vw, 180px)));
+  height: min(87svh, clamp(900px, 70svh, 1500px));
   display: grid;
-  gap: 18px;
+  gap: clamp(14px, 1.4vw, 28px);
 
   @media (max-width: 900px) {
     height: auto;

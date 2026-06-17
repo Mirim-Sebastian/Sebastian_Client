@@ -40,11 +40,11 @@ export const Screen = styled(BaseScreen)`
 export const FishFloat = styled.div`
   position: relative;
   z-index: 1;
-  width: 200px;
-  height: 150px;
+  width: clamp(180px, 16vw, 380px);
+  height: clamp(134px, 12vw, 285px);
   display: grid;
   place-items: center;
-  margin-bottom: 12px;
+  margin-bottom: clamp(10px, 1.2vh, 24px);
   animation: ${floaty} 3.4s ease-in-out infinite;
 
   img {
@@ -78,7 +78,7 @@ export const SentMessage = styled.div`
 export const TitleMain = styled.h1`
   margin: 0;
   font-family: var(--title-font);
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-size: clamp(1.6rem, 2.8vw, 4.8rem);
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.03em;
@@ -93,8 +93,8 @@ export const TitleMain = styled.h1`
 export const SentSubtitle = styled.p`
   position: relative;
   z-index: 1;
-  margin: 18px 0 0;
-  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  margin: clamp(14px, 1.8vh, 32px) 0 0;
+  font-size: clamp(1rem, 1.8vw, 2.2rem);
   color: rgba(230, 240, 255, 0.4);
   letter-spacing: 0.02em;
 `;
@@ -103,9 +103,9 @@ export const SentSubtitle = styled.p`
 export const Countdown = styled.div`
   position: relative;
   z-index: 1;
-  margin-top: 34px;
-  width: 76px;
-  height: 76px;
+  margin-top: clamp(26px, 3.2vh, 56px);
+  width: clamp(70px, 6.5vw, 140px);
+  height: clamp(70px, 6.5vw, 140px);
 
   svg {
     width: 100%;
@@ -127,7 +127,7 @@ export const CountNumber = styled.div`
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 1.75rem;
+  font-size: clamp(1.6rem, 2.4vw, 3.6rem);
   font-weight: 800;
   color: var(--ink);
 `;

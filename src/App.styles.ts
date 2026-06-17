@@ -23,7 +23,7 @@ const toastIn = keyframes`
 export const AppWrapper = styled.div`
   min-height: 100vh;
   overflow: hidden;
-  padding: 14px 8px 50px;
+  padding: clamp(14px, 2vh, 48px) clamp(8px, 3vw, 80px) clamp(20px, 4vh, 60px);
   display: flex;
   align-items: center;
   justify-content: center;

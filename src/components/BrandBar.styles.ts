@@ -3,13 +3,13 @@ import styled from "styled-components";
 const BLUE = "#4aa3ff";
 
 export const Bar = styled.header`
-  width: min(1200px, 100%);
-  height: 64px;
+  width: min(clamp(1200px, 80vw, 2300px), calc(100% - clamp(16px, 4vw, 180px)));
+  height: clamp(56px, 5.5vh, 100px);
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 clamp(6px, 0.8vw, 16px);
   background: rgba(2, 8, 20, 0);
   backdrop-filter: blur(12px);
 `;
@@ -17,32 +17,32 @@ export const Bar = styled.header`
 export const Brand = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(10px, 0.9vw, 18px);
 `;
 
 export const BrandMark = styled.span`
-  width: 30px;
-  height: 30px;
+  width: clamp(26px, 2.2vw, 46px);
+  height: clamp(26px, 2.2vw, 46px);
   display: grid;
   place-items: center;
   color: ${BLUE};
 
   svg {
-    width: 30px;
-    height: 30px;
+    width: 100%;
+    height: 100%;
   }
 `;
 
 export const BrandName = styled.span`
   font-weight: 800;
-  font-size: 1.18rem;
+  font-size: clamp(1rem, 1.1vw, 1.9rem);
   letter-spacing: 0.14em;
   color: #ffffff;
 `;
 
 export const BrandSub = styled.span`
-  margin-left: 6px;
-  font-size: 0.74rem;
+  margin-left: clamp(4px, 0.4vw, 10px);
+  font-size: clamp(0.64rem, 0.65vw, 1.05rem);
   font-weight: 600;
   letter-spacing: 0.34em;
   text-transform: uppercase;
@@ -52,26 +52,26 @@ export const BrandSub = styled.span`
 export const Stepper = styled.div`
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: clamp(7px, 0.7vw, 14px);
 `;
 
 export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
+  gap: clamp(6px, 0.6vw, 12px);
+  font-size: clamp(0.72rem, 0.75vw, 1.15rem);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: ${({ $state }) =>
     $state === "todo" ? "rgba(234, 242, 255, 0.6)" : "#ffffff"};
 
   .num {
-    width: 22px;
-    height: 22px;
+    width: clamp(20px, 1.8vw, 36px);
+    height: clamp(20px, 1.8vw, 36px);
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 0.65vw, 1rem);
     border: 1.5px solid rgba(255, 255, 255, 0.45);
     flex-shrink: 0;
 
@@ -92,8 +92,8 @@ export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
   }
 
   .num svg {
-    width: 13px;
-    height: 13px;
+    width: clamp(11px, 1vw, 18px);
+    height: clamp(11px, 1vw, 18px);
     fill: none;
     stroke: currentColor;
     stroke-width: 2.4;
@@ -109,7 +109,7 @@ export const StepDot = styled.div<{ $state: "todo" | "on" | "done" }>`
 `;
 
 export const StepLine = styled.div`
-  width: 26px;
+  width: clamp(22px, 2vw, 40px);
   height: 1.5px;
   background: rgba(255, 255, 255, 0.35);
 

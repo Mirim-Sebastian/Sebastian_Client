@@ -10,8 +10,8 @@ const BLUE_RGB = "255, 255, 255";
 // ─── Layout : 좌(수조 캔버스) · 우(도구 레일) ───────────────────────────────────
 // 사이드바는 최대 268px, 뷰포트가 좁아지면 비율에 맞게 줄어듦
 export const Screen = styled(BaseScreen)`
-  grid-template-columns: 1fr clamp(140px, 22vw, 268px);
-  gap: clamp(8px, 1.6vw, 20px);
+  grid-template-columns: 1fr clamp(140px, 20vw, 400px);
+  gap: clamp(8px, 1.4vw, 28px);
 `;
 
 // ─── 캔버스 수조 (좌) ────────────────────────────────────────────────────────────
@@ -105,21 +105,21 @@ export const CanvasHint = styled.div`
 export const Controls = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(6px, 0.7vw, 14px);
   min-height: 0;
 
   ${IconButton} {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: clamp(30px, 2.8vw, 52px);
+    height: clamp(30px, 2.8vw, 52px);
+    border-radius: clamp(8px, 0.8vw, 14px);
   }
 `;
 
 export const RailCard = styled.div`
   background: rgba(9, 28, 54, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 9px;
+  border-radius: clamp(12px, 1.2vw, 22px);
+  padding: clamp(7px, 0.75vw, 16px);
   backdrop-filter: blur(16px);
   box-shadow:
     0 10px 30px rgba(2, 8, 20, 0.25),
@@ -138,11 +138,11 @@ export const RailTitle = styled.p`
 export const ToolRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: clamp(4px, 0.5vw, 10px);
 
   ${IconButton} {
     width: auto;
-    height: 44px;
+    height: clamp(40px, 4.5vh, 72px);
   }
 `;
 
@@ -158,8 +158,8 @@ export const RailSpacer = styled.div`
 // auto-fill로 사이드바 너비에 맞게 자동 줄 바꿈
 export const PaletteGroup = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(28px, 2.4vw, 48px), 1fr));
+  gap: clamp(3px, 0.4vw, 8px);
 `;
 
 export const ColorDot = styled.button<{ $active: boolean }>`
@@ -268,14 +268,14 @@ export const EraserModeGroup = styled.div`
 
 export const ModeChip = styled.button<{ $active: boolean }>`
   flex: 1;
-  padding: 6px 0;
-  border-radius: 8px;
+  padding: clamp(5px, 0.6vh, 10px) 0;
+  border-radius: clamp(6px, 0.7vw, 12px);
   border: 1px solid
     ${({ $active }) => ($active ? BLUE : "rgba(255, 255, 255, 0.1)")};
   background: ${({ $active }) =>
     $active ? `rgba(${BLUE_RGB}, 0.14)` : "rgba(255, 255, 255, 0.04)"};
   color: ${({ $active }) => ($active ? BLUE : "rgba(230, 240, 255, 0.5)")};
-  font-size: 0.66rem;
+  font-size: clamp(0.62rem, 0.65vw, 1rem);
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -290,7 +290,7 @@ export const ModeChip = styled.button<{ $active: boolean }>`
 export const TemplatesGroup = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+  gap: clamp(4px, 0.5vw, 10px);
 `;
 
 export const TemplateButton = styled.button<{ $active: boolean }>`
@@ -329,12 +329,12 @@ export const TemplateButton = styled.button<{ $active: boolean }>`
 // ─── 완료 버튼 ───────────────────────────────────────────────────────────────────
 export const CompleteButton = styled.button`
   width: 100%;
-  height: 48px;
-  border-radius: 14px;
+  height: clamp(44px, 5vh, 78px);
+  border-radius: clamp(12px, 1.1vw, 20px);
   border: none;
   background: rgba(255, 255, 255, 0.92);
   color: #04162e;
-  font-size: 0.92rem;
+  font-size: clamp(0.88rem, 1vw, 1.45rem);
   font-weight: 800;
   letter-spacing: 0.02em;
   display: flex;
