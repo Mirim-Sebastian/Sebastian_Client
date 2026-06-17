@@ -111,6 +111,14 @@ function easeOutBack(t: number): number {
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 }
 
+function getFishScaleMultiplier(count: number): number {
+  if (count >= 200) return 0.38;
+  if (count >= 150) return 0.5;
+  if (count >= 100) return 0.65;
+  if (count >= 50) return 0.8;
+  return 1.0;
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 function generateBubbles(): Bubble[] {
@@ -728,7 +736,7 @@ export default function OceanScreen() {
 
             const cx = (fxPx - srcX) * ZOOM;
             const cy = (fyPx - srcY) * ZOOM;
-            const cw = f.scale * ZOOM;
+            const cw = f.scale * getFishScaleMultiplier(fish.length) * ZOOM;
             const ch = cw * (fi.naturalHeight / fi.naturalWidth);
 
             ctx.save();
@@ -822,7 +830,7 @@ export default function OceanScreen() {
           onPointerDown={(e) => handlePointerDown(fish.id, e)}
           onPointerMove={(e) => handlePointerMove(fish.id, e)}
           onPointerUp={() => handlePointerUp(fish.id, fish.message)}
-          style={{ width: `${fish.scale}px` } as CSSProperties}
+          style={{ width: `${fish.scale * getFishScaleMultiplier(fishList.length)}px` } as CSSProperties}
         >
           {activeFishIds.has(fish.id) && (
             <FishSpeechBubble>{fish.message}</FishSpeechBubble>
