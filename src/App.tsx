@@ -85,6 +85,7 @@ function App() {
   const actionsRef       = useRef<DrawAction[]>([]);
   const currentStrokeRef = useRef<StrokeAction | null>(null);
   const currentEraseRef  = useRef<EraseAction | null>(null);
+  const lastPointRef     = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const historyRef       = useRef<DrawAction[][]>([[]]);
   const redoHistoryRef   = useRef<DrawAction[][]>([]);
 
@@ -274,6 +275,7 @@ function App() {
         ctx.moveTo(x, y);
         ctx.lineTo(x + 0.1, y + 0.1);
         ctx.stroke();
+        lastPointRef.current = { x, y };
         setHasDrawing(true);
       } else {
         handleEraseAction(e);
@@ -294,6 +296,7 @@ function App() {
     ctx.moveTo(x, y);
     ctx.lineTo(x + 0.1, y + 0.1);
     ctx.stroke();
+    lastPointRef.current = { x, y };
     setHasDrawing(true);
   };
 
@@ -303,13 +306,13 @@ function App() {
         const ctx = contextRef.current;
         if (!ctx) return;
         const { x, y } = getPoint(e);
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.lineWidth = eraserSize;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        const last = lastPointRef.current;
         currentEraseRef.current?.points.push(getRelativePoint(e));
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
         ctx.lineTo(x, y);
         ctx.stroke();
+        lastPointRef.current = { x, y };
       } else {
         handleEraseAction(e);
       }
@@ -319,9 +322,13 @@ function App() {
     const ctx = contextRef.current;
     if (!ctx) return;
     const { x, y } = getPoint(e);
+    const last = lastPointRef.current;
     currentStrokeRef.current?.points.push(getRelativePoint(e));
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
     ctx.lineTo(x, y);
     ctx.stroke();
+    lastPointRef.current = { x, y };
   };
 
   const handlePointerUp = (e: PointerEvent<HTMLCanvasElement>) => {
