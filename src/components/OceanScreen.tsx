@@ -400,8 +400,7 @@ export default function OceanScreen() {
       fishListRef.current[idx] = { ...fishListRef.current[idx], x, y };
     const el = fishDomRefs.current.get(fishId);
     if (el) {
-      el.style.left = `${x}%`;
-      el.style.top = `${y}%`;
+      el.style.transform = `translate(${(x / 100) * rect.width}px, ${(y / 100) * rect.height}px)`;
     }
   };
 
@@ -649,8 +648,7 @@ export default function OceanScreen() {
       for (const f of fish) {
         const el = fishDomRefs.current.get(f.id);
         if (el && !f.dragging) {
-          el.style.left = `${f.x}%`;
-          el.style.top = `${f.y}%`;
+          el.style.transform = `translate(${(f.x / 100) * ow}px, ${(f.y / 100) * oh}px)`;
           el.style.setProperty("--fish-direction", String(-f.direction));
         }
       }
@@ -717,6 +715,7 @@ export default function OceanScreen() {
           }
 
           const cache = fishImgCache.current;
+          const scaleMult = getFishScaleMultiplier(fish.length);
           for (const f of fish) {
             const fxPx = (f.x / 100) * ow;
             const fyPx = (f.y / 100) * oh;
@@ -736,7 +735,7 @@ export default function OceanScreen() {
 
             const cx = (fxPx - srcX) * ZOOM;
             const cy = (fyPx - srcY) * ZOOM;
-            const cw = f.scale * getFishScaleMultiplier(fish.length) * ZOOM;
+            const cw = f.scale * scaleMult * ZOOM;
             const ch = cw * (fi.naturalHeight / fi.naturalWidth);
 
             ctx.save();
@@ -816,8 +815,9 @@ export default function OceanScreen() {
               // when a fish is added/removed — NOT when direction changes mid-swim.
               const cur =
                 fishListRef.current.find((f) => f.id === fish.id) ?? fish;
-              el.style.left = `${cur.x}%`;
-              el.style.top = `${cur.y}%`;
+              const ow2 = oceanRef.current?.offsetWidth ?? 0;
+              const oh2 = oceanRef.current?.offsetHeight ?? 0;
+              el.style.transform = `translate(${(cur.x / 100) * ow2}px, ${(cur.y / 100) * oh2}px)`;
               el.style.setProperty("--fish-direction", String(-cur.direction));
               el.style.setProperty(
                 "--fish-anim-duration",
