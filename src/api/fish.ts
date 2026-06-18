@@ -23,8 +23,9 @@ export async function deleteFish(id: string): Promise<void> {
   }
 }
 
-export async function getFishes(): Promise<FishResponse[]> {
-  const response = await fetch(`${API_BASE}/fish`)
+export async function getFishes(limit = 250): Promise<FishResponse[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const response = await fetch(`${API_BASE}/fish?${params}`)
   if (!response.ok) throw new Error(`GET /fish failed (${response.status})`)
   return (await response.json()) as FishResponse[]
 }

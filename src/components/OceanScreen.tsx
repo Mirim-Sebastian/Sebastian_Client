@@ -96,6 +96,7 @@ const SHARK_MOUTH_DIST = 20;
 const SHARK_Y_OFFSET = -12;
 const SHARK_SIZE = 360;
 const MAX_FISH = 250;
+const LENS_RENDER_INTERVAL_MS = 66;
 const WS_URL =
   (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
 
@@ -285,6 +286,7 @@ export default function OceanScreen() {
   const sharkRef = useRef<Shark | null>(null);
   const sharkThresholdRef = useRef(0);
   const oceanRef = useRef<HTMLDivElement | null>(null);
+  const oceanSizeRef = useRef({ width: 0, height: 0 });
   const dragStateRef = useRef<DragState | null>(null);
   const fishDomRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const sharkDomRef = useRef<HTMLDivElement | null>(null);
@@ -309,6 +311,8 @@ export default function OceanScreen() {
   const lensCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const bgImgRef = useRef<HTMLImageElement | null>(null);
   const fishImgCache = useRef<Map<number, HTMLImageElement>>(new Map());
+  const lastLensRenderRef = useRef(0);
+  const bubbleAudioRef = useRef<HTMLAudioElement[]>([]);
 
   const topFishElRef = useRef<HTMLDivElement | null>(null);
 
@@ -469,9 +473,11 @@ export default function OceanScreen() {
   // ─── Click bubbles ─────────────────────────────────────────────────────────
 
   const playRandomBubbleSound = () => {
-    const src =
-      BUBBLE_SOUND_PATHS[Math.floor(Math.random() * BUBBLE_SOUND_PATHS.length)];
-    const audio = new Audio(src);
+    const sounds = bubbleAudioRef.current;
+    const audio =
+      sounds[Math.floor(Math.random() * sounds.length)] ??
+      new Audio(BUBBLE_SOUND_PATHS[0]);
+    audio.currentTime = 0;
     audio.volume = 0.7;
     audio.play().catch(() => {});
   };
@@ -511,6 +517,36 @@ export default function OceanScreen() {
     const img = new Image();
     img.src = bgOceanUrl;
     bgImgRef.current = img;
+  }, []);
+
+  useEffect(() => {
+    bubbleAudioRef.current = BUBBLE_SOUND_PATHS.map((src) => {
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      return audio;
+    });
+    return () => {
+      bubbleAudioRef.current.forEach((audio) => {
+        audio.pause();
+        audio.src = "";
+      });
+      bubbleAudioRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    const oceanEl = oceanRef.current;
+    if (!oceanEl) return;
+    const updateSize = () => {
+      oceanSizeRef.current = {
+        width: oceanEl.clientWidth,
+        height: oceanEl.clientHeight,
+      };
+    };
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(oceanEl);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -606,16 +642,23 @@ export default function OceanScreen() {
       lastTime = now;
       const t = delta / 50; // normalize: t=1 at original 50ms, t≈0.33 at 60fps
 
-      // Read ocean size once per tick — before any DOM writes, so no forced reflow
       const oceanEl = oceanRef.current;
       if (!oceanEl) {
         rafId = requestAnimationFrame(tick);
         return;
       }
-      const ow = oceanEl.offsetWidth;
-      const oh = oceanEl.offsetHeight;
+      let { width: ow, height: oh } = oceanSizeRef.current;
+      if (ow <= 0 || oh <= 0) {
+        ow = oceanEl.clientWidth;
+        oh = oceanEl.clientHeight;
+        oceanSizeRef.current = { width: ow, height: oh };
+      }
 
-      let fish = fishListRef.current.map((f) => moveFish(f, t, ow, oh));
+      const prevFish = fishListRef.current;
+      let fish = new Array<Fish>(prevFish.length);
+      for (let i = 0; i < prevFish.length; i += 1) {
+        fish[i] = moveFish(prevFish[i], t, ow, oh);
+      }
       fish = resolveCollisions(fish);
       const currentShark = sharkRef.current;
 
@@ -682,6 +725,15 @@ export default function OceanScreen() {
       // ── Magnifier canvas ──
       const canvas = lensCanvasRef.current;
       if (canvas && ow > 0 && oh > 0) {
+        const shouldDrawLens =
+          lensGrabRef.current !== null ||
+          snapAnimRef.current !== null ||
+          now - lastLensRenderRef.current >= LENS_RENDER_INTERVAL_MS;
+        if (!shouldDrawLens) {
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+        lastLensRenderRef.current = now;
         const ctx = canvas.getContext("2d");
         if (ctx) {
           const { x: lx, y: ly } = lensPosRef.current;
