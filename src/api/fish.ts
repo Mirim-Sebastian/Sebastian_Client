@@ -14,7 +14,12 @@ export type FishResponse = {
   size: string
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '')
+const DEFAULT_BACKEND_BASE = 'https://sebastian-server-n5d2.onrender.com'
+
+const API_BASE = (
+  import.meta.env.VITE_API_BASE ??
+  (window.location.hostname === 'localhost' ? '' : DEFAULT_BACKEND_BASE)
+).replace(/\/$/, '')
 
 export async function deleteFish(id: string): Promise<void> {
   const response = await fetch(`${API_BASE}/fish/${id}`, { method: 'DELETE' })

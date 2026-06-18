@@ -51,6 +51,8 @@ interface Shark {
   phase: "chase" | "exit";
   mouthOpen: boolean;
   eatenCount: number;
+  allowProtectedTargets?: boolean;
+  deleteTargets?: boolean;
 }
 
 interface Bubble {
@@ -97,8 +99,32 @@ const SHARK_Y_OFFSET = -12;
 const SHARK_SIZE = 360;
 const MAX_FISH = 250;
 const LENS_RENDER_INTERVAL_MS = 66;
-const WS_URL =
-  (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
+const DEFAULT_BACKEND_BASE = "https://sebastian-server-n5d2.onrender.com";
+
+function getWsUrl(): string {
+  const explicitUrl = import.meta.env.VITE_WS_URL as string | undefined;
+  if (explicitUrl) return explicitUrl;
+
+  const apiBase = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(
+    /\/$/,
+    "",
+  );
+  if (apiBase) {
+    const url = new URL(apiBase, window.location.origin);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    return url.toString().replace(/\/$/, "");
+  }
+
+  if (window.location.hostname === "localhost") {
+    return "ws://localhost:8000";
+  }
+
+  const url = new URL(DEFAULT_BACKEND_BASE);
+  url.protocol = "wss:";
+  return url.toString().replace(/\/$/, "");
+}
+
+const WS_URL = getWsUrl();
 
 const FISH_SIZE_MAP: Record<string, number> = {
   small: 130,
@@ -230,7 +256,7 @@ function tickShark(
   onEat: (eaten: Fish) => void,
 ): { next: Shark | null; fish: Fish[] } {
   let { x, y, direction, phase, targetId, mouthOpen } = shark;
-  const { exitDir } = shark;
+  const { allowProtectedTargets, deleteTargets, exitDir } = shark;
   let eatenCount = shark.eatenCount;
   let nextFish = fish;
 
@@ -246,7 +272,9 @@ function tickShark(
         nextFish = fish.filter((f) => f.id !== targetId);
         eatenCount += 1;
         mouthOpen = false;
-        const nextTargets = nextFish.filter((f) => !f.protected);
+        const nextTargets = allowProtectedTargets
+          ? nextFish
+          : nextFish.filter((f) => !f.protected);
         if (eatenCount < 5 && nextTargets.length > 0) {
           const next =
             nextTargets[Math.floor(Math.random() * nextTargets.length)];
@@ -273,7 +301,18 @@ function tickShark(
 
   if (x > 130 || x < -30) return { next: null, fish: nextFish };
   return {
-    next: { x, y, direction, exitDir, phase, targetId, mouthOpen, eatenCount },
+    next: {
+      x,
+      y,
+      direction,
+      exitDir,
+      phase,
+      targetId,
+      mouthOpen,
+      eatenCount,
+      allowProtectedTargets,
+      deleteTargets,
+    },
     fish: nextFish,
   };
 }
@@ -315,6 +354,34 @@ export default function OceanScreen() {
   const bubbleAudioRef = useRef<HTMLAudioElement[]>([]);
 
   const topFishElRef = useRef<HTMLDivElement | null>(null);
+
+  const spawnShark = (options?: {
+    allowProtectedTargets?: boolean;
+    deleteTargets?: boolean;
+  }) => {
+    if (sharkRef.current) return;
+    const targets = options?.allowProtectedTargets
+      ? fishListRef.current
+      : fishListRef.current.filter((f) => !f.protected);
+    if (targets.length === 0) return;
+    const target = targets[Math.floor(Math.random() * targets.length)];
+    const fromRight = Math.random() < 0.5;
+    const newShark: Shark = {
+      x: fromRight ? 130 : -30,
+      y: target.y,
+      targetId: target.id,
+      direction: fromRight ? -1 : 1,
+      exitDir: fromRight ? -1 : 1,
+      phase: "chase",
+      mouthOpen: false,
+      eatenCount: 0,
+      allowProtectedTargets: options?.allowProtectedTargets,
+      deleteTargets: options?.deleteTargets,
+    };
+    sharkRef.current = newShark;
+    prevMouthRef.current = false;
+    setShark(newShark);
+  };
 
   // ─── Drag ──────────────────────────────────────────────────────────────────
 
@@ -586,35 +653,35 @@ export default function OceanScreen() {
       ws.onmessage = (event: MessageEvent<string>) => {
         const msg = JSON.parse(event.data) as {
           type?: string;
-          data?: Parameters<typeof makeFish>[0];
+          data?: (Parameters<typeof makeFish>[0] & { id?: string }) | { id?: string };
+          allowProtectedTargets?: boolean;
+          deleteTargets?: boolean;
         };
 
-        if (msg.type === "SPAWN_SHARK") {
-          if (!sharkRef.current) {
-            const targets = fishListRef.current.filter((f) => !f.protected);
-            if (targets.length > 0) {
-              const target =
-                targets[Math.floor(Math.random() * targets.length)];
-              const fromRight = Math.random() < 0.5;
-              sharkRef.current = {
-                x: fromRight ? 130 : -30,
-                y: target.y,
-                targetId: target.id,
-                direction: fromRight ? -1 : 1,
-                exitDir: fromRight ? -1 : 1,
-                phase: "chase",
-                mouthOpen: false,
-                eatenCount: 0,
-              };
-              prevMouthRef.current = false;
-              setShark(sharkRef.current);
-            }
-          }
+        if (msg.type === "FISH_DELETED") {
+          const deletedId = msg.data?.id;
+          if (!deletedId) return;
+          const next = fishListRef.current.filter((f) => f.dbId !== deletedId);
+          fishListRef.current = next;
+          setFishList(next);
           return;
         }
 
+        if (msg.type === "SPAWN_SHARK") {
+          spawnShark({
+            allowProtectedTargets: msg.allowProtectedTargets,
+            deleteTargets: msg.deleteTargets,
+          });
+          return;
+        }
+
+        if (msg.type && msg.type !== "NEW_FISH") return;
+
+        const fishData = msg.data as Parameters<typeof makeFish>[0] | undefined;
+        if (!fishData?.name || !fishData.image) return;
+
         const newFish = makeFish(
-          msg.data ?? (msg as unknown as Parameters<typeof makeFish>[0]),
+          fishData,
           Date.now(),
           true,
         );
@@ -664,7 +731,7 @@ export default function OceanScreen() {
 
       if (currentShark) {
         const result = tickShark(currentShark, fish, t, (eaten) => {
-          if (eaten.dbId && !eaten.protected)
+          if (eaten.dbId && (currentShark.deleteTargets || !eaten.protected))
             deleteFish(eaten.dbId).catch(console.error);
         });
         fish = result.fish;
@@ -815,29 +882,6 @@ export default function OceanScreen() {
     return () => cancelAnimationFrame(rafId);
   }, []);
 
-  // ─── Debug ─────────────────────────────────────────────────────────────────
-
-  const spawnShark = () => {
-    if (sharkRef.current) return;
-    const targets = fishListRef.current.filter((f) => !f.protected);
-    if (targets.length === 0) return;
-    const target = targets[Math.floor(Math.random() * targets.length)];
-    const fromRight = Math.random() < 0.5;
-    const newShark: Shark = {
-      x: fromRight ? 130 : -30,
-      y: target.y,
-      targetId: target.id,
-      direction: fromRight ? -1 : 1,
-      exitDir: fromRight ? -1 : 1,
-      phase: "chase",
-      mouthOpen: false,
-      eatenCount: 0,
-    };
-    sharkRef.current = newShark;
-    prevMouthRef.current = false;
-    setShark(newShark);
-  };
-
   // 물고기가 30의 배수를 새로 넘을 때마다 상어 소환
   useEffect(() => {
     const count = fishList.length;
@@ -848,7 +892,8 @@ export default function OceanScreen() {
       !sharkRef.current
     ) {
       sharkThresholdRef.current = threshold;
-      spawnShark();
+      const rafId = requestAnimationFrame(() => spawnShark());
+      return () => cancelAnimationFrame(rafId);
     }
   }, [fishList.length]); // spawnShark는 ref만 사용해 안정적
 
