@@ -105,10 +105,9 @@ function getWsUrl(): string {
   const explicitUrl = import.meta.env.VITE_WS_URL as string | undefined;
   if (explicitUrl) return explicitUrl;
 
-  const apiBase = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(
-    /\/$/,
-    "",
-  );
+  const apiBase = (
+    import.meta.env.VITE_API_BASE as string | undefined
+  )?.replace(/\/$/, "");
   if (apiBase) {
     const url = new URL(apiBase, window.location.origin);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
@@ -617,7 +616,7 @@ export default function OceanScreen() {
   }, []);
 
   useEffect(() => {
-    const audio = new Audio("/바다bgm2(잔잔발랄).mp3");
+    const audio = new Audio("/seabgm.mp3");
     audio.loop = true;
     audio.volume = 0.4;
     audio.play().catch(() => {});
@@ -653,7 +652,9 @@ export default function OceanScreen() {
       ws.onmessage = (event: MessageEvent<string>) => {
         const msg = JSON.parse(event.data) as {
           type?: string;
-          data?: (Parameters<typeof makeFish>[0] & { id?: string }) | { id?: string };
+          data?:
+            | (Parameters<typeof makeFish>[0] & { id?: string })
+            | { id?: string };
           allowProtectedTargets?: boolean;
           deleteTargets?: boolean;
         };
@@ -680,11 +681,7 @@ export default function OceanScreen() {
         const fishData = msg.data as Parameters<typeof makeFish>[0] | undefined;
         if (!fishData?.name || !fishData.image) return;
 
-        const newFish = makeFish(
-          fishData,
-          Date.now(),
-          true,
-        );
+        const newFish = makeFish(fishData, Date.now(), true);
         let next = [...fishListRef.current, newFish];
         if (next.length > MAX_FISH) next = next.slice(next.length - MAX_FISH);
         fishListRef.current = next;
@@ -927,7 +924,11 @@ export default function OceanScreen() {
           onPointerDown={(e) => handlePointerDown(fish.id, e)}
           onPointerMove={(e) => handlePointerMove(fish.id, e)}
           onPointerUp={() => handlePointerUp(fish.id, fish.message)}
-          style={{ width: `${fish.scale * getFishScaleMultiplier(fishList.length)}px` } as CSSProperties}
+          style={
+            {
+              width: `${fish.scale * getFishScaleMultiplier(fishList.length)}px`,
+            } as CSSProperties
+          }
         >
           {activeFishIds.has(fish.id) && (
             <FishSpeechBubble>{fish.message}</FishSpeechBubble>
