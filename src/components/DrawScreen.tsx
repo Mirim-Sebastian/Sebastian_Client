@@ -2,7 +2,6 @@ import type { PointerEvent, RefObject } from "react";
 import {
   CheckIcon,
   EraserIcon,
-  EyeDropperIcon,
   FillIcon,
   PenIcon,
   RedoIcon,
@@ -109,18 +108,6 @@ export const DrawScreen = ({
   const isFill = tool === "fill";
   const dotPx = Math.max(6, Math.min(26, brushSize * 0.6));
 
-  const handleEyedropperTool = async () => {
-    if (!("EyeDropper" in window)) return;
-    try {
-      const eyeDropper = new (window as unknown as { EyeDropper: new () => { open(): Promise<{ sRGBHex: string }> } }).EyeDropper();
-      const { sRGBHex } = await eyeDropper.open();
-      onCustomColorChange(sRGBHex);
-      onToolChange("pen");
-    } catch {
-      // 사용자가 취소
-    }
-  };
-
   return (
     <Screen>
       {/* 좌측 — 캔버스 수조 */}
@@ -187,15 +174,6 @@ export const DrawScreen = ({
             >
               <FillIcon />
             </IconButton>
-            {"EyeDropper" in window && (
-              <IconButton
-                type="button"
-                onClick={handleEyedropperTool}
-                aria-label="스포이드"
-              >
-                <EyeDropperIcon />
-              </IconButton>
-            )}
           </ToolRow>
         </RailCard>
 
