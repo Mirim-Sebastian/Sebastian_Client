@@ -140,8 +140,8 @@ function easeOutBack(t: number): number {
 function getFishScaleMultiplier(count: number): number {
   if (count >= 100) return 0.2;
   if (count >= 75) return 0.3;
-  if (count >= 50) return 0.55;
-  if (count >= 25) return 0.75;
+  if (count >= 50) return 0.5;
+  if (count >= 25) return 0.7;
   return 1.0;
 }
 
